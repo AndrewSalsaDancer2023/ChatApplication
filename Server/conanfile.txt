@@ -1,0 +1,6 @@
+[requires]
+boost/1.82.0
+mongo-cxx-driver/3.8.0
+
+[generators]
+cmake

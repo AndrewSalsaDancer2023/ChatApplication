@@ -1,0 +1,70 @@
+syntax = "proto3";
+import "google/protobuf/any.proto";
+
+package Serialize;
+
+// This could also be carried by the Envelope, and be in a
+// completely different .proto file
+message ChatSources {
+  string package = 1;
+  repeated string sources = 2;
+}
+
+message Login {
+	string login = 1;
+	string password = 2;
+	string database = 3;
+}
+
+message StringVector {
+  repeated string value = 1;
+}
+
+message UserInfo {
+    string name = 1;
+    string surname = 2;
+    string email = 3;
+    string nickname = 4;
+    string password = 5;
+    string profilepicture = 6;
+    bool deleted = 7;
+}
+
+message UserInfoVector {
+	repeated UserInfo users = 1;
+}
+
+message ResultCode {
+	uint32 resultCode = 1;
+}
+
+message GetUsers {
+	string dbName = 1;
+	string collectionName = 2;
+}
+
+message AddUser {
+	GetUsers passTo = 1;
+	UserInfo info = 2;
+}
+
+message TextMessage {
+    string message = 1;
+}
+
+message ChatMessage {
+    string sender = 1;
+    // Opaque payload type identifier, could be anything that helps the
+    // client to decode the payload correctly.
+    uint32 payload_type_id = 99;
+ 
+    // This is the actual payload, another Protocol Buffer.
+    // See the description for the Any type.
+    google.protobuf.Any payload = 2;
+}
+
+
+message ChatBinData {
+	string filename = 1;
+	bytes context = 2;
+}

@@ -1,0 +1,21 @@
+syntax = "proto3";
+import "google/protobuf/any.proto";
+
+package Serialize;
+
+message Authentication {
+  string login = 1;
+  string password = 2;
+}
+
+message ConnectionParameters {
+  string host = 1;
+  uint32 port = 2;
+}
+
+message ConnectionData {
+	Authentication authentication = 1;
+	ConnectionParameters connectionParameters = 2;
+}
+
+

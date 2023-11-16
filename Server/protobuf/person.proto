@@ -1,0 +1,47 @@
+syntax = "proto3";
+import "google/protobuf/any.proto";
+
+package Serialize;
+
+message Address {
+	string street = 1;
+	uint32 building = 2;
+}
+
+message Person {
+	string name = 1;
+	string age = 2;
+	Address address = 3;
+	repeated string phone_number = 4;
+}
+
+message Server {
+  string server = 1;
+  string location = 2;
+  uint32 server_id = 3;
+}
+ 
+// This could also be carried by the Envelope, and be in a
+// completely different .proto file
+message Sources {
+  string package = 1;
+  repeated string sources = 2;
+}
+
+message Envelope {
+    string sender = 1;
+    string message = 2;
+ 
+    // Opaque payload type identifier, could be anything that helps the
+    // client to decode the payload correctly.
+    uint32 payload_type_id = 99;
+ 
+    // This is the actual payload, another Protocol Buffer.
+    // See the description for the Any type.
+    google.protobuf.Any payload = 3;
+}
+
+message BinData {
+	string filename = 1;
+	bytes context = 2;
+}
