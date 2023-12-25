@@ -146,9 +146,9 @@ bool removeUserFromChat(const mongocxx::database& db, const std::string& chatCol
 }
 
 
-std::vector<std::string> getAllChatsUserBelongsTo(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& userNickName)
+Database::chatInfoArray getAllChatsUserBelongsTo(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& userNickName)
 {
-   std::vector<std::string> result;
+   Database::chatInfoArray result;
 
    if(!hasCollection(db, chatCollectionName))
        return result;
@@ -160,11 +160,27 @@ std::vector<std::string> getAllChatsUserBelongsTo(const mongocxx::database& db, 
 
    for (auto& doc : all_documents)
    {
-        result.push_back(bsonElementToString(doc["title"]));
+	   auto participants = doc["participants"];
+
+	   if (participants.type() != type::k_array)
+	          continue;
+
+	   Database::chatInfo chat;
+	   bsoncxx::array::view partview{participants.get_array().value};
+	   for (const bsoncxx::array::element& msg : partview)
+	   {
+		   if (msg.type() != type::k_string)
+			   continue;
+		   chat.participants.push_back(bsonArrayElementToString(msg));
+	   }
+
+	   chat.title = bsonElementToString(doc["title"]);
+	   result.chats.push_back(chat);
+//	   result.push_back(bsonElementToString(doc["title"]));
    }
     return result;
 }
-
+/*
 bsoncxx::document::value createChatDocument(const Database::chatMessage& curMsg)
 {
     auto time = bsoncxx::types::b_date(curMsg.message.time);
@@ -172,7 +188,15 @@ bsoncxx::document::value createChatDocument(const Database::chatMessage& curMsg)
 
     return document;
 }
+*/
+bsoncxx::document::value createChatDocument(const std::string& nickName, const std::chrono::milliseconds& tstamp, const std::string& message)
+{
+    auto time = bsoncxx::types::b_date(tstamp);
+    auto document = make_document(kvp("from", nickName), kvp("message", message), kvp("time", time));
 
+    return document;
+}
+/*
 std::vector<Database::chatMessage> getChatDocuments(const mongocxx::database& db, const std::string& chatTitle)
 {
     std::vector<Database::chatMessage> result;
@@ -188,25 +212,40 @@ std::vector<Database::chatMessage> getChatDocuments(const mongocxx::database& db
 
         curMsg.message.userNickName = bsonElementToString(doc["from"]);
         curMsg.message.userMessage = bsonElementToString(doc["message"]);
-        curMsg.message.time = {}; //bsonElementToTimePoint(doc["time"]);
+        curMsg.message.time = bsonElementToTimePoint(doc["time"]);
 
         result.push_back(curMsg);
     }
 
     return result;
 }
-
-/*
-#include <chrono>
-#include <iostream>
-
-int main()
-{
-    const auto now = std::chrono::system_clock::now();
-    const std::time_t t_c = std::chrono::system_clock::to_time_t(now);
 */
 
-bsoncxx::document::value createChatDescriptionDocument(const std::string& chatTitle, std::set<std::string>& users)
+Database::chatMessagesTape getChatDocuments(const mongocxx::database& db, const std::string& chatTitle)
+{
+//    std::vector<Database::chatMessage> result;
+	Database::chatMessagesTape result;
+    if(!hasCollection(db, chatTitle))
+        return result;
+
+    auto collection = db[chatTitle];
+    auto all_documents = collection.find({});
+
+    for (auto& doc : all_documents)
+    {
+    	Database::singleUserMessage curMsg;
+
+        curMsg.userNickName = bsonElementToString(doc["from"]);
+        curMsg.userMessage = bsonElementToString(doc["message"]);
+        curMsg.timestamp = bsonElementToTimePoint(doc["time"]);
+
+        result.messages.push_back(curMsg);
+    }
+
+    return result;
+}
+
+bsoncxx::document::value createChatDescriptionDocument(const std::string& chatTitle, const std::set<std::string>& users)
 {
 /*
     auto doc_value = make_document();
@@ -218,7 +257,7 @@ bsoncxx::document::value createChatDescriptionDocument(const std::string& chatTi
   */
     bsoncxx::builder::basic::document update_builder;
     bsoncxx::builder::basic::array participants_array;
-    for (auto& user : users)
+    for (const auto& user : users)
         participants_array.append(user);
 
     auto document = make_document(kvp("title", chatTitle), kvp("participants", participants_array), kvp("deleted", false));
@@ -319,7 +358,7 @@ bool isChatAddedToDatabase(const mongocxx::database& db, const std::string& chat
     return (find_result ? true : false);
 }
 
-bool deleteUserFromDatabase(const mongocxx::database& db, const std::string& collectionName, const std::string& userNickname)
+bool markUserAsDeletedFromDatabase(const mongocxx::database& db, const std::string& collectionName, const std::string& userNickname)
 {
 	  if(!hasCollection(db, collectionName))
 	        return false;
@@ -333,6 +372,27 @@ bool deleteUserFromDatabase(const mongocxx::database& db, const std::string& col
 		  return false;
 
 	  return ((*result).result().modified_count() == 1);
+}
+
+bool deleteUserFromDatabase(const mongocxx::database& db, const std::string& collectionName, const std::string& userNickname)
+{
+	  if(!hasCollection(db, collectionName))
+	        return false;
+
+	  auto collection = db[collectionName];
+//	  auto searchDocument = make_document(kvp("nickname", userNickname));
+//	  auto updateDocument =  make_document(kvp("$set", make_document(kvp("deleted", true))));
+
+	  auto result = collection.delete_one(make_document(kvp("nickname", userNickname)));
+//	  assert(delete_one_result);
+//	  assert(delete_one_result->deleted_count() == 1);
+
+	  //auto result = collection.update_one(searchDocument.view(), updateDocument.view());
+
+	  if(!result)
+		  return false;
+
+	  return ((*result).result().deleted_count() == 1);
 }
 
 
@@ -367,6 +427,42 @@ bool modifyUserInfo(const mongocxx::database& db, const std::string& collectionN
         return false;
 
     return (*result).result().modified_count() == 1;
+}
+
+bool createChat(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& chatTitle, const std::set<std::string>& participants)
+{
+	  if(!hasCollection(db, chatCollectionName))
+	        return false;
+
+	 if(isChatAddedToDatabase(db, chatCollectionName, chatTitle))
+		 return false;
+/*
+	 std::set<std::string> users;
+
+	 for(const auto& user: info.participants)
+		 users.insert(user);
+*/
+	 auto newChat = createChatDescriptionDocument(chatTitle, participants);
+	 if(!addDocumentToCollection(db, chatCollectionName, newChat))
+		 return false;
+
+	return true;
+}
+
+bool addMessageToChat(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& nickName, const std::chrono::milliseconds& tstamp, const std::string& message)
+{
+//   Database::chatInfoArray result;
+
+   if(!hasCollection(db, chatCollectionName))
+       return false;
+
+//   auto chatRoom = db[chatCollectionName];
+
+   auto documet = createChatDocument(nickName, tstamp, message);
+   if(!addDocumentToCollection(db, chatCollectionName, documet))
+	   return false;
+
+   return true;
 }
 /*
  * auto update_many_result =

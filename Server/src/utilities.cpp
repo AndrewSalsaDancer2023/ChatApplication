@@ -92,6 +92,40 @@ std::string serializeGetUsersMessage(PayloadType type, const std::vector<Databas
 
 	 return output;
 }
+
+std::string serializeAllChatsUserBelongsToMessage(PayloadType type, const Database::chatInfoArray& chatsList)
+{
+	Serialize::chatInfoArray chatsInfo;
+
+	for(const auto& chat: chatsList.chats)
+	{
+			Serialize::chatInfo* newChatInfo = chatsInfo.add_chats();
+
+			newChatInfo->set_title(chat.title);
+
+			for(const auto& participant: chat.participants)
+				newChatInfo->add_participants(participant);
+	}
+
+	Serialize::ChatMessage msg;
+	msg.mutable_payload()->PackFrom(chatsInfo);
+	msg.set_payload_type_id(static_cast<::google::protobuf::uint32>(type));
+
+	std::string output;
+	if(!msg.SerializeToString(&output))
+		output.clear();
+
+	return output;
+}
+
+std::string serializeChatMessage(const Serialize::ChatMessage& msg)
+{
+	std::string output;
+	if(!msg.SerializeToString(&output))
+		output.clear();
+
+	return output;
+}
 /*
 std::string toString(const md5::digest_type &digest)
 {

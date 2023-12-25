@@ -28,6 +28,24 @@ struct userInfo
     bool deleted{false};
 };
 
+struct chatInfo
+{
+	std::string title;
+	std::vector<std::string> participants;
+};
+
+struct chatInfoArray
+{
+	std::vector<chatInfo> chats;
+};
+
+
+struct userChatInfo
+{
+	std::string chatTitle;
+	std::string userNickname;
+};
+
 
 struct userAuthInfo
 {
@@ -37,15 +55,31 @@ struct userAuthInfo
 
 struct userMessage
 {
+    std::string chatTitle;
     std::string userNickName;
     std::string userMessage;
-    std::chrono::time_point<std::chrono::system_clock> time;
-//    std::chrono::time_point<std::chrono::high_resolution_clock> time;
+    int64_t time;
 };
 
 struct chatMessage
 {
+	std::string chatTitle;
     userMessage message;
     std::vector<userMessage> comments;
 };
+
+struct singleUserMessage
+{
+	int64_t timestamp;
+    std::string userNickName;
+    std::string userMessage;
+};
+
+struct chatMessagesTape
+{
+	std::string dbName;
+	std::string chatTitle;
+	std::vector<singleUserMessage> messages;
+};
+
 }

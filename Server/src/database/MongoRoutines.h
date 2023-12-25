@@ -28,10 +28,11 @@ inline int64_t bsonElementToTimePoint(const bsoncxx::document::element& element)
 std::vector<Database::userInfo> getAllUsers(const mongocxx::database& db, const std::string& usersCollectionName);
 bool addUserToChat(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& chatTitle, const std::string& userNickName);
 bool removeUserFromChat(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& chatTitle, const std::string& userNickName);
-std::vector<std::string> getAllChatsUserBelongsTo(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& userNickName);
+Database::chatInfoArray getAllChatsUserBelongsTo(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& userNickName);
 bsoncxx::document::value createChatDocument(const Database::chatMessage& curMsg);
-std::vector<Database::chatMessage> getChatDocuments(const mongocxx::database& db, const std::string& chatTitle);
-bsoncxx::document::value createChatDescriptionDocument(const std::string& chatTitle, std::set<std::string>& users);
+//std::vector<Database::chatMessage> getChatDocuments(const mongocxx::database& db, const std::string& chatTitle);
+Database::chatMessagesTape getChatDocuments(const mongocxx::database& db, const std::string& chatTitle);
+bsoncxx::document::value createChatDescriptionDocument(const std::string& chatTitle, const std::set<std::string>& users);
 bsoncxx::document::value createUserDocument(const Database::userInfo& user);
 bool addDocumentToCollection(const mongocxx::database& db, const std::string& collectionName, bsoncxx::document::value& document);
 bool isUserAddedToDatabase(const mongocxx::database& db, const std::string& userCollection, const std::string& userNick);
@@ -40,7 +41,10 @@ std::set<std::string> getAllUsersInChat(const mongocxx::database& db, const std:
 bool isChatAddedToDatabase(const mongocxx::database& db, const std::string& chatListCollection, const std::string& chatTitle);
 std::optional<Database::userAuthInfo> findUserAuthInfo(const mongocxx::database& db, const std::string& usersCollectionName, const std::string& userNick);
 bool deleteUserFromDatabase(const mongocxx::database& db, const std::string& collectionName, const std::string& userNickname);
+bool markUserAsDeletedFromDatabase(const mongocxx::database& db, const std::string& collectionName, const std::string& userNickname);
 bool modifyUserInfo(const mongocxx::database& db, const std::string& collectionName, const Database::userInfo& info);
+bool createChat(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& chatTitle, const std::set<std::string>& participants);
+bool addMessageToChat(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& nickName, const std::chrono::milliseconds& tstamp, const std::string& message);
 
 class DatabaseDriver {
     public:
@@ -86,6 +90,15 @@ class DatabaseDriver {
     	return true;
     }
 
+    bool markUserAsDeletedFromDatabase(const std::string& dbName, const std::string& collectionName, const std::string& userNickname)
+        {
+        	auto db = client[dbName];
+        	if(::isUserAddedToDatabase(db, collectionName, userNickname))
+        		return false;
+
+        	return ::markUserAsDeletedFromDatabase(db, collectionName, userNickname);
+        }
+
     bool deleteUserFromDatabase(const std::string& dbName, const std::string& collectionName, const std::string& userNickname)
     {
     	auto db = client[dbName];
@@ -100,10 +113,60 @@ class DatabaseDriver {
     	auto db = client[dbName];
     	return ::modifyUserInfo(db, collectionName, info);
     }
+
+    bool createChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& chatTitle, const std::set<std::string>& participants)
+    {
+    	auto db = client[dbName];
+    	return ::createChat(db, chatCollectionName, chatTitle, participants);
+    }
+
+    bool addUserToChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& chatTitle, const std::string& userNickName)
+    {
+    	auto db = client[dbName];
+    	return ::addUserToChat(db, chatCollectionName, chatTitle, userNickName);
+    }
+
+    bool removeUserFromChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& chatTitle, const std::string& userNickName)
+    {
+    	auto db = client[dbName];
+    	return ::removeUserFromChat(db, chatCollectionName, chatTitle, userNickName);
+    }
+
+    Database::chatInfoArray getAllChatsUserBelongsTo(const std::string& dbName, const std::string& chatCollectionName, const std::string& userNickName)
+	{
+    	auto db = client[dbName];
+    	return ::getAllChatsUserBelongsTo(db, chatCollectionName, userNickName);
+	}
+
+    bool addMessageToChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName, const std::chrono::milliseconds& tstamp, const std::string& message)
+    {
+    	auto db = client[dbName];
+    	return ::addMessageToChat(db, chatCollectionName, nickName, tstamp, message);
+    }
+
+    Database::chatMessagesTape getChatDocuments(const std::string& dbName, const std::string& chatCollectionName)
+    {
+    	auto db = client[dbName];
+    	return ::getChatDocuments(db, chatCollectionName);
+    }
+/*
+ * struct chatInfo
+{
+	std::string title;
+	std::vector<std::string> participants;
+};
+ *
+ *         	if(::isUserAddedToDatabase(db, collectionName, userNickname))
+        		return false;
+
+        	return ::markUserAsDeletedFromDatabase(db, collectionName, userNickname);*/
+
+
+
     private:
      mongocxx::instance mongoInstance{};
      mongocxx::client client{mongocxx::uri{}};
-    
+
     DatabaseDriver()
     {
     }

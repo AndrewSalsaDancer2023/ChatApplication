@@ -48,6 +48,9 @@ else()
     authenticatedialog.cpp
     authenticatedialog.h
     authenticatedialog.ui
+    coordinator.h
+    coordinator.cpp
+    MainWindowInterface.h
     ../../Server/build/authentication.pb.h
     ../../Server/build/authentication.pb.cc    
     ../../Server/build/messages.pb.h
@@ -57,10 +60,15 @@ else()
     ../../Server/src/database/DatabaseTypes.cpp
     ../../Server/src/security.h
     ../../Server/src/security.cpp
-    parametersserialization.h
-    parametersserialization.cpp
-    messageserialization.h
-    messageserialization.cpp
+    ./ServerCommunication/servercommunicator.h
+    ./ServerCommunication/servercommunicator.cpp
+    ./ServerCommunication/messageserialization.h
+    ./ServerCommunication/messageserialization.cpp
+    ./ServerCommunication/authutils.h
+    ./ServerCommunication/authutils.cpp
+    ./ServerCommunication/coordinatorinterface.h
+    ./ServerCommunication/parametersserialization.h
+    ./ServerCommunication/parametersserialization.cpp
     ${PROTO_SRCS} ${PROTO_HDRS}
   )
 endif()

@@ -1,5 +1,6 @@
 syntax = "proto3";
 import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
 
 package Serialize;
 
@@ -48,8 +49,59 @@ message AddUser {
 	UserInfo info = 2;
 }
 
-message TextMessage {
-    string message = 1;
+message CreateChatInfo
+{
+	string dbName = 1;
+	string collectionName = 2;
+	string chatTitle = 3;
+	repeated string participants = 4;
+}
+
+message AddRemoveUserChatInfo
+{
+	string dbName = 1;
+	string collectionName = 2;
+	string chatTitle = 3;
+	string userNickname = 4;
+}
+
+message chatInfo
+{
+	string title = 1;
+	repeated string participants = 2;
+}
+
+message chatInfoArray
+{
+	repeated chatInfo chats = 1;
+}
+
+message userMessage
+{
+	google.protobuf.Timestamp timestamp = 1;
+    string userNickName = 2;
+    string userMessage = 3;
+}
+
+message userChatMessage
+{
+	string dbName = 1;
+	string chatTitle = 2;
+	userMessage message = 3;
+}
+
+message chatMessages
+{
+	string dbName = 1;
+	string chatTitle = 2;
+	repeated userMessage  messages = 3;
+}
+
+message getChatTapeMessage
+{
+	string dbName = 1;
+	string chatTitle = 2;
+	string userNickName = 3;
 }
 
 message ChatMessage {

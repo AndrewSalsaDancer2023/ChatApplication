@@ -73,6 +73,7 @@ void
 websocket_session::
 on_read(beast::error_code ec, std::size_t)
 {
+try{
     std::cout << "websocket_session::on_read called" << std::endl;
     // Handle the error, if any
     if(ec)
@@ -111,6 +112,11 @@ on_read(beast::error_code ec, std::size_t)
     	handleAddUserToDatabase(*this, msg);
     }
     else
+    if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_MARK_USER_AS_DELETED) == msg.payload_type_id())
+    {
+    	handleMarkUserAsDeleted(*this, msg);
+    }
+    else
     if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_DELETE_USER) == msg.payload_type_id())
     {
     	handleDeleteUser(*this, msg);
@@ -120,30 +126,39 @@ on_read(beast::error_code ec, std::size_t)
     {
     	handleModifyUser(*this, msg);
     }
- /*   {
-	if(msg.has_payload())
-	    {
- 		Serialize::Login logmsg;
-      		msg.mutable_payload()->UnpackTo(&logmsg);
-      		
-		std::string usrlogin = logmsg.login();
-		std::string password = logmsg.password();
-		
-		auto& inst = AuthentictionData::instance();
-		std::string result;
-		if((usrlogin == inst.getLogin()) && (password == inst.getPassword()))
-		{
-			result = serializeNoPayloadMessage(PayloadType::CLIENT_AUTHENTICATION_APPROVED);
-		}
-		else
-		{
-			result = serializeNoPayloadMessage(PayloadType::CLIENT_AUTHENTICATION_REJECTED);
-		}
-		ws_.binary(true);
-		auto const ss = boost::make_shared<std::string const>(std::move(result));
-		send(ss);
-	    }
-    }*/
+
+    else
+    if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_CREATE_CHAT) == msg.payload_type_id())
+    {
+    	handleCreateChat(*this, msg);
+    }
+    else
+    if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_ADD_USER_TO_CHAT) == msg.payload_type_id())
+    {
+    	handleAddUserToChat(*this, msg);
+    }
+    else
+    if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_DELETE_USER_FROM_CHAT) == msg.payload_type_id())
+    {
+    	handleDeleteUserFromChat(*this, msg);
+    }
+    else
+        if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_GET_CHATS_USER_BELONGS_TO) == msg.payload_type_id())
+        {
+        	handleGetChatsUserBelongsTo(*this, msg);
+        }
+    else
+    	if(static_cast<::google::protobuf::uint32>(PayloadType::CLIENT_SEND_MESSAGE_TO_CHAT) == msg.payload_type_id())
+    	{
+    		handleAddMessageToDatabase(*this, msg);
+    		translateMessageToParticipants(*this, msg);
+    	}
+    	else
+    		if(static_cast<::google::protobuf::uint32>(PayloadType::CLIENT_REQUEST_MESSAGE_TAPE_FOR_CHAT) == msg.payload_type_id())
+    		{
+    			handleSendChatTapeToClient(*this, msg);
+    		}
+
  else 
  {
 //    state_->send(beast::buffers_to_string(buffer_.data()));
@@ -152,7 +167,11 @@ on_read(beast::error_code ec, std::size_t)
 }
     // Clear the buffer
     buffer_.consume(buffer_.size());
-
+}
+catch(std::exception& ex)
+{
+	std::cout << "Exception occured:" << ex.what() << std::endl;
+}
     // Read another message
     ws_.async_read(
         buffer_,
