@@ -7,6 +7,7 @@ enum class PayloadType : unsigned int;
 namespace Database {
  struct userInfo;
  struct chatInfoArray;
+ struct chatMessagesTape;
 }
 
 std::string readFileIntoString(const std::string& path);
@@ -59,4 +60,5 @@ std::string serializeNoPayloadMessage(PayloadType type, const std::string& sende
 std::string serializeStringVectorMessage(PayloadType type, const std::vector<std::string>& values);
 std::string serializeGetUsersMessage(PayloadType type, const std::vector<Database::userInfo>& users);
 std::string serializeAllChatsUserBelongsToMessage(PayloadType type, const Database::chatInfoArray& chatsList);
-std::string serializeChatMessage(const Serialize::ChatMessage& msg);
+std::string serializeChatMessagesTape(PayloadType type, const Database::chatMessagesTape& tape);
+std::string serializeChatMessage(PayloadType type, Serialize::ChatMessage& msg);

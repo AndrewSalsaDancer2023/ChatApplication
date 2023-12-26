@@ -221,12 +221,14 @@ std::vector<Database::chatMessage> getChatDocuments(const mongocxx::database& db
 }
 */
 
-Database::chatMessagesTape getChatDocuments(const mongocxx::database& db, const std::string& chatTitle)
+Database::chatMessagesTape getChatDocuments(const mongocxx::database& db, const std::string& dbName, const std::string& chatTitle)
 {
-//    std::vector<Database::chatMessage> result;
 	Database::chatMessagesTape result;
     if(!hasCollection(db, chatTitle))
         return result;
+
+    result.chatTitle = chatTitle;
+    result.dbName = dbName;
 
     auto collection = db[chatTitle];
     auto all_documents = collection.find({});

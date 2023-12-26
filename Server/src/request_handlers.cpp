@@ -375,7 +375,7 @@ void handleAddMessageToDatabase(websocket_session& session, Serialize::ChatMessa
 
 void translateMessageToParticipants(websocket_session& session, Serialize::ChatMessage& msg)
 {
-	std::string result = serializeChatMessage(msg);
+	std::string result = serializeChatMessage(PayloadType::SERVER_SEND_MESSAGE_FROM_CHAT, msg);
 	auto const ss = boost::make_shared<std::string const>(std::move(result));
 	session.send(ss);
 }
@@ -392,7 +392,6 @@ void handleSendChatTapeToClient(websocket_session& session, Serialize::ChatMessa
     auto dbName = getTapeMessage.dbname();
     auto chatCollectionName = getTapeMessage.chattitle();
     auto userNickname = getTapeMessage.usernickname();
-
 
     auto &dbInstance =  DatabaseDriver::instance();
     const auto& chatsArray = dbInstance.getAllChatsUserBelongsTo(dbName, chatCollectionName, userNickname);
@@ -412,7 +411,13 @@ void handleSendChatTapeToClient(websocket_session& session, Serialize::ChatMessa
     }
     if(!userBelongsToChat)
     {
-    	//return error
+		std::string result = serializeNoPayloadMessage(PayloadType::SERVER_SEND_MESSAGE_TAPE_FROM_CHAT_ERROR, "User is not added to chat!");
+    	auto const ss = boost::make_shared<std::string const>(std::move(result));
+    	session.send(ss);
+    	return;
     }
-    Database::chatMessagesTape& res =  dbInstance.getChatDocuments(dbName, chatCollectionName);
+    const Database::chatMessagesTape& res =  dbInstance.getChatDocuments(dbName, chatCollectionName);
+    auto result = serializeChatMessagesTape(PayloadType::SERVER_SEND_MESSAGE_TAPE_FROM_CHAT, res);
+    auto const ss = boost::make_shared<std::string const>(std::move(result));
+    session.send(ss);
 }

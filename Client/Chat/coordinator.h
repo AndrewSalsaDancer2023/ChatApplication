@@ -10,7 +10,6 @@
 #include <functional>
 #include <set>
 #include "../../DatabaseAdmin/AdminTool/ServerCommunication/servercommunicator.h"
-//#include <QStringListModel>
 #include "stringlistmodel.h"
 #include <memory>
 
@@ -93,6 +92,10 @@ private:
 
     void handleGetUsersInfoSuccess(Serialize::ChatMessage& msg);
     void handleGetUsersInfoError(Serialize::ChatMessage& msg);
+
+    void handleGetMessageFromChat(Serialize::ChatMessage& msg);
+    void handleGetMessageTapeFromChat(Serialize::ChatMessage& msg);
+    void handleGetMessageTapeFromChatError(Serialize::ChatMessage& msg);
 
     commState state{commState::Disconnected};
     std::map<::google::protobuf::uint32, std::function<void(Serialize::ChatMessage&)> > handlers;

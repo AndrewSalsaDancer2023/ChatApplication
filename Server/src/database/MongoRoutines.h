@@ -29,9 +29,9 @@ std::vector<Database::userInfo> getAllUsers(const mongocxx::database& db, const 
 bool addUserToChat(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& chatTitle, const std::string& userNickName);
 bool removeUserFromChat(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& chatTitle, const std::string& userNickName);
 Database::chatInfoArray getAllChatsUserBelongsTo(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& userNickName);
-bsoncxx::document::value createChatDocument(const Database::chatMessage& curMsg);
+//bsoncxx::document::value createChatDocument(const Database::chatMessage& curMsg);
 //std::vector<Database::chatMessage> getChatDocuments(const mongocxx::database& db, const std::string& chatTitle);
-Database::chatMessagesTape getChatDocuments(const mongocxx::database& db, const std::string& chatTitle);
+Database::chatMessagesTape getChatDocuments(const mongocxx::database& db, const std::string& dbName, const std::string& chatTitle);
 bsoncxx::document::value createChatDescriptionDocument(const std::string& chatTitle, const std::set<std::string>& users);
 bsoncxx::document::value createUserDocument(const Database::userInfo& user);
 bool addDocumentToCollection(const mongocxx::database& db, const std::string& collectionName, bsoncxx::document::value& document);
@@ -147,21 +147,8 @@ class DatabaseDriver {
     Database::chatMessagesTape getChatDocuments(const std::string& dbName, const std::string& chatCollectionName)
     {
     	auto db = client[dbName];
-    	return ::getChatDocuments(db, chatCollectionName);
+    	return ::getChatDocuments(db, dbName, chatCollectionName);
     }
-/*
- * struct chatInfo
-{
-	std::string title;
-	std::vector<std::string> participants;
-};
- *
- *         	if(::isUserAddedToDatabase(db, collectionName, userNickname))
-        		return false;
-
-        	return ::markUserAsDeletedFromDatabase(db, collectionName, userNickname);*/
-
-
 
     private:
      mongocxx::instance mongoInstance{};

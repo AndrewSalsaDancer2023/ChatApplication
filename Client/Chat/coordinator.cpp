@@ -2,7 +2,7 @@
 #include "../../DatabaseAdmin/AdminTool/ServerCommunication/messageserialization.h"
 #include "../../DatabaseAdmin/AdminTool/ServerCommunication/authutils.h"
 #include "../../Server/src/database/DatabaseTypes.h"
-
+#include <google/protobuf/util/time_util.h>
 Coordinator::Coordinator(QObject *parent) :
     QObject(parent)
 {
@@ -80,6 +80,25 @@ Coordinator::Coordinator(QObject *parent) :
             {
                handleGetUsersInfoError(msg);
             };
+
+     handlers[static_cast<::google::protobuf::uint32>(PayloadType::SERVER_SEND_MESSAGE_FROM_CHAT)] =
+               [this](Serialize::ChatMessage& msg)
+            {
+               handleGetMessageFromChat(msg);
+            };
+
+     handlers[static_cast<::google::protobuf::uint32>(PayloadType::SERVER_SEND_MESSAGE_TAPE_FROM_CHAT)] =
+               [this](Serialize::ChatMessage& msg)
+            {
+               handleGetMessageTapeFromChat(msg);
+            };
+
+     handlers[static_cast<::google::protobuf::uint32>(PayloadType::SERVER_SEND_MESSAGE_TAPE_FROM_CHAT_ERROR)] =
+               [this](Serialize::ChatMessage& msg)
+            {
+               handleGetMessageTapeFromChatError(msg);
+            };
+
 
     connect(&chats, SIGNAL(itemSelected(std::string)), this, SLOT(onChatSelected(std::string)));
 //    connect(this, SIGNAL(weatherImageObtained(QString, unsigned)), this, SLOT(setForecastImage(QString, unsigned)));
@@ -271,7 +290,6 @@ void Coordinator::handleGetUsersInfoSuccess(Serialize::ChatMessage& msg)
      getUsers(elements);
 }
 
-
 void Coordinator::handleGetUsersInfoError(Serialize::ChatMessage& msg)
 {
     const std::string& reason = msg.sender();
@@ -281,42 +299,65 @@ void Coordinator::handleGetUsersInfoError(Serialize::ChatMessage& msg)
     emit showError(outmsg);
 }
 
-/*
-void coordinator::handleDeleteUser(Serialize::ChatMessage& msg)
+void Coordinator::handleGetMessageFromChat(Serialize::ChatMessage& msg)
 {
-    const std::string& nickName = msg.sender();
-    auto itFind = std::find_if(users.begin(), users.end(),[&nickName](const auto& user){
-            return user.nickname == nickName;
-        });
-    if(itFind == users.end())
+    Serialize::userChatMessage userChatMessage;
+    msg.mutable_payload()->UnpackTo(&userChatMessage);
+
+    if(!userChatMessage.has_message())
+         return;
+
+    const Serialize::userMessage& message = userChatMessage.message();
+    if(!message.has_timestamp())
         return;
-    itFind->deleted = true;
+
+    Database::userChatMessage packMessage;
+    packMessage.dbName = std::move(userChatMessage.dbname());
+    packMessage.chatTitle = std::move(userChatMessage.chattitle());
+
+
+    packMessage.message.userNickName = std::move(message.usernickname());
+    packMessage.message.userMessage = std::move(message.usermessage());
+    packMessage.message.timestamp =
+        google::protobuf::util::TimeUtil::TimestampToMilliseconds(message.timestamp());
+
+//    check chattitle
+    if(databaseName.toStdString() != packMessage.dbName)
+        return;
 }
 
-void coordinator::handleModifyUserInfoError(Serialize::ChatMessage& msg)
+void Coordinator::handleGetMessageTapeFromChat(Serialize::ChatMessage& msg)
 {
-    const std::string& nickName = msg.sender();
-    std::string message = "Unable modify user:" + nickName;
+    Serialize::chatTape chatTape;
+    msg.mutable_payload()->UnpackTo(&chatTape);
+
+    auto dbName = std::move(chatTape.dbname());
+    if(databaseName.toStdString() != dbName)
+        return;
+
+    auto chatTitle = std::move(chatTape.chattitle());
+    //add chat title check
+
+
+    int numMessages = chatTape.messages_size();
+    for(int i = 0; i < numMessages; ++i)
+    {
+        const Serialize::userMessage& curMessage = chatTape.messages(i);
+        auto nick = curMessage.usernickname();
+        auto message = curMessage.usermessage();
+        auto tstamp = google::protobuf::util::TimeUtil::TimestampToMilliseconds(curMessage.timestamp());
+    }
+}
+
+void Coordinator::handleGetMessageTapeFromChatError(Serialize::ChatMessage& msg)
+{
+    const std::string& reason = msg.sender();
+    std::string message = "Unable get users info:" + reason;
     QString outmsg = QString::fromStdString(message);
-    interface.showMessage(outmsg);
+    emit showError(outmsg);
 }
 
-void coordinator::handleModifyUserInfo(Serialize::ChatMessage& msg)
-{
-    const std::string& nickName = msg.sender();
-    auto itFind = std::find_if(users.begin(), users.end(),[&nickName](const auto& user){
-            return user.nickname == nickName;
-    });
-
-    if((itFind == users.end()) || !userSelected)
-        return;
-
-    if((*userSelected).nickname != nickName)
-        return;
-
-    *itFind = *userSelected;
-}
-
+/*
 void coordinator::selectCurrentUserInList()
 {
     if(!userSelected)

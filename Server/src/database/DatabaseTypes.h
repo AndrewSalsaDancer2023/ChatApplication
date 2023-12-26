@@ -52,13 +52,13 @@ struct userAuthInfo
     std::string nickname;
     std::string password;
 };
-
+/*
 struct userMessage
 {
     std::string chatTitle;
     std::string userNickName;
     std::string userMessage;
-    int64_t time;
+    int64_t timestamp;
 };
 
 struct chatMessage
@@ -67,12 +67,19 @@ struct chatMessage
     userMessage message;
     std::vector<userMessage> comments;
 };
-
+*/
 struct singleUserMessage
 {
 	int64_t timestamp;
     std::string userNickName;
     std::string userMessage;
+};
+
+struct userChatMessage
+{
+   std::string dbName;
+   std::string chatTitle;
+   singleUserMessage message;
 };
 
 struct chatMessagesTape

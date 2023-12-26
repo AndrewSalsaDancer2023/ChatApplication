@@ -5,6 +5,7 @@
 #include "messages.pb.h"
 #include "database/MongoRoutines.h"
 #include "database/DatabaseTypes.h"
+#include <google/protobuf/util/time_util.h>
 /*
 #include <boost/uuid/detail/md5.hpp>
 #include <boost/algorithm/hex.hpp>
@@ -113,16 +114,43 @@ std::string serializeAllChatsUserBelongsToMessage(PayloadType type, const Databa
 
 	std::string output;
 	if(!msg.SerializeToString(&output))
-		output.clear();
+		return {};
 
 	return output;
 }
 
-std::string serializeChatMessage(const Serialize::ChatMessage& msg)
+std::string serializeChatMessagesTape(PayloadType type, const Database::chatMessagesTape& tape)
 {
+	Serialize::chatTape chatTape;
+
+	chatTape.set_dbname(tape.dbName);
+	chatTape.set_chattitle(tape.chatTitle);
+
+	for(const auto& message: tape.messages)
+	{
+		Serialize::userMessage* pMessage = chatTape.add_messages();
+		pMessage->set_usernickname(message.userNickName);
+		pMessage->set_usermessage(message.userMessage);
+		*pMessage->mutable_timestamp() = google::protobuf::util::TimeUtil::MillisecondsToTimestamp(message.timestamp);
+	}
+
+	Serialize::ChatMessage msg;
+	msg.mutable_payload()->PackFrom(chatTape);
+	msg.set_payload_type_id(static_cast<::google::protobuf::uint32>(type));
+
 	std::string output;
 	if(!msg.SerializeToString(&output))
-		output.clear();
+		return {};
+
+	return output;
+}
+
+std::string serializeChatMessage(PayloadType type, Serialize::ChatMessage& msg)
+{
+	msg.set_payload_type_id(static_cast<::google::protobuf::uint32>(type));
+	std::string output;
+	if(!msg.SerializeToString(&output))
+		return {};
 
 	return output;
 }

@@ -326,7 +326,7 @@ std::string createInfoChatMessage(const std::string& dbName, const std::string& 
     userChatMessage.set_dbname(dbName);
     userChatMessage.set_chattitle(chatCollectionName);
 
-    *userChatMessage.mutable_message() = fillUserMessage(nickName, message);//userMessage;
+    *userChatMessage.mutable_message() = fillUserMessage(nickName, message);
 
     Serialize::ChatMessage msg;
     msg.mutable_payload()->PackFrom(userChatMessage);
