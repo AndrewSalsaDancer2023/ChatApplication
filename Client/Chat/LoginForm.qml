@@ -2,7 +2,8 @@ import QtQuick.Controls 1.5
 import QtQuick.Controls.Styles 1.4
 import QtQuick 2.12
 import Authentication 1.0
-//import Coordinator 1.0
+import "qrc:/uiutilities.js" as Utils
+
 
 Rectangle {
  //   anchors.fill: parent
@@ -12,6 +13,36 @@ Rectangle {
     color: "grey"
 //    border.color: "black"
 
+    Component.onCompleted: {
+            Coordinator.setLoginScreenShown(true)
+        }
+
+    Component.onDestruction: {
+        Coordinator.setLoginScreenShown(false)
+    }
+
+
+    property var busyIndicator: null
+/*
+    function createBusyIndicator(root)
+    {
+        if(busyIndicator == null) {
+            var component = Qt.createComponent("BusyIndicator.qml")
+            busyIndicator = component.createObject(root, {"x" : 0, "y" : 0})
+            if(busyIndicator !== null) {
+                busyIndicator.anchors.centerIn = root
+            }
+        }
+    }
+
+    function destroyBusyIndocator() {
+        if(busyIndicator !== null) {
+            busyIndicator.destroy()
+            busyIndicator = null
+        }
+    }
+*/
+
 
     AuthenticationForm {
         id: authentication
@@ -19,17 +50,25 @@ Rectangle {
 
     Connections {
         target: Coordinator
-        onAuthSuccess: {
+/*        onAuthSuccess: {
            stackView.pop()
            stackView.push("qrc:/ChatView.qml")
         }
-
+*/
         onAuthError: {
-            createMessageWindow(message)
+            Utils.createMessageWindow(authForm, message)
+        }
+
+        onShowBusyIndicator: {
+            Utils.createBusyIndicator(authForm, busyIndicator)
+        }
+
+        onHideBusyIndicator: {
+            Utils.destroyBusyIndocator()
         }
     }
 
-    property var messageWindow: null
+ /*   property var messageWindow: null
     function createMessageWindow(text) {
         if(messageWindow == null) {
             var component = Qt.createComponent("MessageBox.qml")
@@ -48,7 +87,7 @@ Rectangle {
             messageWindow = null
         }
     }
-
+*/
     function checkAuthInfo() {
         Coordinator.setAuthenticationData(login.text, password.text, dbName.text)
     }

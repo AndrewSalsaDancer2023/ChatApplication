@@ -269,7 +269,6 @@ Serialize::userMessage fillUserMessage(const std::string& nickName, const std::s
     return userMessage;
 }
 
-//void handleDeleteUserFromChat(websocket_session& session, Serialize::ChatMessage& msg)
 void handleReceiveInfoChatMessage(/*websocket_session& session,*/ Serialize::ChatMessage& msg)
 {
     if(!msg.has_payload())
@@ -311,13 +310,6 @@ void handleReceiveInfoChatMessage(/*websocket_session& session,*/ Serialize::Cha
     std::stringstream ss;
     ss << std::put_time(std::localtime(&in_time_t), "%d-%m-%Y %X");
     std::cout << ss.str() << std::endl;
-
-/*
-    ::google::protobuf::Timestamp timestamp;
-    timestamp.set_seconds(time(NULL));
-    timestamp.set_nanos(0);
-    *userMessage.mutable_timestamp() = timestamp;
-*/
 }
 
 std::string createInfoChatMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName, const std::string& message)
@@ -332,13 +324,83 @@ std::string createInfoChatMessage(const std::string& dbName, const std::string& 
     msg.mutable_payload()->PackFrom(userChatMessage);
     msg.set_payload_type_id(static_cast<::google::protobuf::uint32>(PayloadType::CLIENT_SEND_MESSAGE_TO_CHAT));
 
-    handleReceiveInfoChatMessage(msg);
+//    handleReceiveInfoChatMessage(msg);
 
     std::string out;
     if(msg.SerializeToString(&out))
         return out;
 
     return {};
+}
+
+std::string createGetChatTapeMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName)
+{
+    Serialize::getChatTapeMessage chatTapeMsg;
+    chatTapeMsg.set_dbname(dbName);
+    chatTapeMsg.set_chattitle(chatCollectionName);
+    chatTapeMsg.set_usernickname(nickName);
+
+    Serialize::ChatMessage msg;
+    msg.mutable_payload()->PackFrom(chatTapeMsg);
+    msg.set_payload_type_id(static_cast<::google::protobuf::uint32>(PayloadType::CLIENT_REQUEST_MESSAGE_TAPE_FOR_CHAT));
+
+    std::string out;
+    if(msg.SerializeToString(&out))
+        return out;
+
+    return {};
+}
+
+Database::userChatMessage decodeChatMessage(Serialize::ChatMessage& msg)
+{
+    Serialize::userChatMessage userChatMessage;
+    msg.mutable_payload()->UnpackTo(&userChatMessage);
+
+    if(!userChatMessage.has_message())
+        return {};
+
+    const Serialize::userMessage& message = userChatMessage.message();
+    if(!message.has_timestamp())
+        return {};
+
+    Database::userChatMessage packMessage;
+    packMessage.dbName = std::move(userChatMessage.dbname());
+    packMessage.chatTitle = std::move(userChatMessage.chattitle());
+
+    packMessage.message.userNickName = std::move(message.usernickname());
+    packMessage.message.userMessage = std::move(message.usermessage());
+    packMessage.message.timestamp =
+        google::protobuf::util::TimeUtil::TimestampToMilliseconds(message.timestamp());
+
+    return packMessage;
+}
+
+Database::chatMessagesTape decodeMessageTapeFromChat(Serialize::ChatMessage& msg)
+{
+    Serialize::chatTape chatTape;
+    msg.mutable_payload()->UnpackTo(&chatTape);
+
+    Database::chatMessagesTape chatContent;
+
+    chatContent.dbName = std::move(chatTape.dbname());
+    chatContent.chatTitle = std::move(chatTape.chattitle());
+
+//    int numMessages = chatTape.messages_size();
+    for(int i = 0; i < chatTape.messages_size(); ++i)
+    {
+        Serialize::userMessage* pCurMessage = chatTape.mutable_messages(i);
+        if(!pCurMessage)
+            continue;
+
+        Database::singleUserMessage usrmsg;
+        usrmsg.userNickName = std::move(pCurMessage->usernickname());
+        usrmsg.userMessage = std::move(pCurMessage->usermessage());
+        usrmsg.timestamp = google::protobuf::util::TimeUtil::TimestampToMilliseconds(pCurMessage->timestamp());
+
+        chatContent.messages.push_back(std::move(usrmsg));
+    }
+
+    return chatContent;
 }
 /*
 message userMessage

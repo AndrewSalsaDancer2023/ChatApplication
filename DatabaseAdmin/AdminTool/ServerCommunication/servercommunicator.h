@@ -34,6 +34,9 @@ public:
     void sendDeleteUserFromChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::string& nickName);
     void sendCreateChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::vector<std::string>& participants);
     void sendMessageToChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName, const std::string& message);
+    void sendGetMessageTapeFromChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName);
+
+    void connectToHost();
 signals:
 
 public slots:
@@ -43,6 +46,7 @@ private Q_SLOTS:
     void onBinaryMessageReceived(const QByteArray &message);
 //     commState state{commState::Disconnected};
 private:
+     QString host;
      QWebSocket m_webSocket;
      NetworkCoordinatorInterface& coordinator;
 };

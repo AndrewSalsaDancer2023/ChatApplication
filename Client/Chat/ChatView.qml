@@ -16,6 +16,10 @@ SplitView {
         Coordinator.mainWindowLoaded()
     }
 
+    function clearMessageField() {
+        channelMessage.text = "";
+    }
+
     Connections {
         target: Coordinator
         onShowError:{
@@ -28,6 +32,11 @@ SplitView {
 
         onGetChatsUserBelongError:{
             createMessageWindow(message)
+        }
+
+        onClearMessageField : {
+            console.log("onClearMessageField")
+            clearMessageField()
         }
     }
 
@@ -52,6 +61,13 @@ SplitView {
         }
     }
 
+    function destroyMessageWindow() {
+        if(messageWindow !== null) {
+            messageWindow.destroy()
+            messageWindow = null
+        }
+    }
+/*
     property var busyIndicator: null
 
     function createBusyIndicator()
@@ -72,13 +88,8 @@ SplitView {
         }
     }
 
+*/
 
-    function destroyMessageWindow() {
-        if(messageWindow !== null) {
-            messageWindow.destroy()
-            messageWindow = null
-        }
-    }
 
      Rectangle {
          width: parent.width / 3
@@ -93,7 +104,7 @@ SplitView {
                 font.pixelSize: 20
                 color: "#F69678"
                 text: "Settings"
-              }*/
+              }
              Button {
                  id: profileButton
                  width: parent.width
@@ -102,13 +113,25 @@ SplitView {
                      destroyBusyIndocator()
                  }
              }
+//                     console.log("Create channel")
+                     createBusyIndicator()
+*/
              Button {
                  id: channelsButton
                  width: parent.width
                  text: "Create channel"
                  onClicked: {
-//                     console.log("Create channel")
-                     createBusyIndicator()
+                     stackView.push("qrc:/AddChannelForm.qml")
+                 }
+             }
+             Button {
+                 id: profileButton
+                 width: parent.width
+                 text: "Add members"
+                 onClicked:  {
+                   Coordinator.prepareUsersLists(chatList.currentIndex)
+//                     chatsList.getItem(chatList.currentIndex).
+                     stackView.push("qrc:/AddParticipantsForm.qml")
                  }
              }
              Text {
@@ -121,7 +144,6 @@ SplitView {
                  id: chatList
                  width: parent.width
                  height: parent.height - profileButton.height - channelsButton.height - channelsTitle.height
-//                 anchors.fill: parent
                  spacing: 5
                   model: chatsList
                   ChatListItem {
@@ -187,7 +209,7 @@ SplitView {
                         orientation: ListView.Horizontal
                         layoutDirection: Qt.LeftToRight
                         spacing: 5
-                        model: participantsList
+                        model: members
                         ParticipantListItem {
                             id: participantsDelegate
                         }
@@ -214,7 +236,7 @@ SplitView {
                 height: parent.height - chatInfoBlock.height - messageBlock.height
 //                 anchors.fill: parent
                 spacing: 5
-                 model: ContactModel {}
+                 model: conversation
                  ConversationItem {
                      id: conversationDelegate
                  }

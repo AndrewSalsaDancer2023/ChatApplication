@@ -16,14 +16,22 @@ Component {
             }
             Column {
                 id: textInfo
-                Text {
-                    id: conversationInfoName
-                    text: name
-                    color: "black"
+                Row {
+                    spacing: 5
+                    Text {
+                        id: conversationInfoName
+                        text: user
+                        color: "black"
+                    }
+                    Text {
+                        id: conversationDate
+                        text: date
+                        color: "black"
+                    }
                 }
                 Text {
                     id: conversationInfoNumber
-                    text: number
+                    text: message
                     color: "black"
                 }
             }

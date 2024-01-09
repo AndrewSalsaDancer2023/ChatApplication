@@ -2,6 +2,9 @@
 #include "./ServerCommunication/messageserialization.h"
 #include "MainWindowInterface.h"
 #include "./ServerCommunication/authutils.h"
+
+const std::string path{"../../Server/data/config.json"};
+
 coordinator::coordinator(MainWindowInterface& window, QObject *parent) :
     QObject(parent),
     interface{window}
@@ -355,7 +358,7 @@ void coordinator::sendGetDBNamesMessage()
 
 void coordinator::sendAuthorizeMessage(const std::string& dbName)
 {
-    const auto&[login, password] = getLoginPassword();
+    const auto&[login, password] = getLoginPassword(path);
     sendAuthorizeMessage(login, password, dbName);
 }
 

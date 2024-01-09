@@ -4,10 +4,14 @@ import QtQuick 2.12
 
 Rectangle {
    id: waitingIndicator
-    width: dialogContainer.width + 20
-    height: dialogContainer.height + 20
+   width: parent.width
+   height: parent.height
+//    width: dialogContainer.width + 20
+//    height: dialogContainer.height + 20
     anchors.centerIn: parent
-    color: "lightgrey"
+//    color: "lightgrey"
+//    color: "lightblue"
+      color: "#B4525252"
    Column {
         id: waitingContainer
         spacing: 4
@@ -25,4 +29,11 @@ Rectangle {
         }
 
     }
+   MouseArea {
+       anchors.fill: parent
+       cursorShape: Qt.PointingHandCursor
+       onClicked: {
+
+       }
+   }
 }

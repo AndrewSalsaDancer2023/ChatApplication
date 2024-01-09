@@ -45,6 +45,7 @@ bool markUserAsDeletedFromDatabase(const mongocxx::database& db, const std::stri
 bool modifyUserInfo(const mongocxx::database& db, const std::string& collectionName, const Database::userInfo& info);
 bool createChat(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& chatTitle, const std::set<std::string>& participants);
 bool addMessageToChat(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& nickName, const std::chrono::milliseconds& tstamp, const std::string& message);
+bool deleteAllMessagesFromChat(const mongocxx::database& db, const std::string& chatCollectionName);
 
 class DatabaseDriver {
     public:
@@ -148,6 +149,12 @@ class DatabaseDriver {
     {
     	auto db = client[dbName];
     	return ::getChatDocuments(db, dbName, chatCollectionName);
+    }
+
+    bool deleteAllMessagesFromChat(const std::string& dbName, const std::string& chatCollectionName)
+    {
+    	auto db = client[dbName];
+    	return ::deleteAllMessagesFromChat(db, chatCollectionName);
     }
 
     private:

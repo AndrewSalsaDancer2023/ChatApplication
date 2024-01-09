@@ -132,3 +132,8 @@ QModelIndex StringListModel::createIndexForData(const QString& name)
     }
     return {};
 }
+
+bool StringListModel::containsData(const std::string& info)
+{
+    return m_chats.contains(info);
+}

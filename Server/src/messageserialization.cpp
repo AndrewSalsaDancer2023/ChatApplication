@@ -2,6 +2,8 @@
 #include <string>
 #include <iostream>
 #include "../../Server/src/common_types.h"
+#include "../../Server/src/database/DatabaseTypes.h"
+#include <google/protobuf/util/time_util.h>
 
 std::string createAuthorizationMessage(const std::string& login, const std::string& password)
 {
@@ -32,4 +34,28 @@ Serialize::ChatMessage decodeMessageFromString(const std::string& message)
     }
 
     return msg;
+}
+
+Database::userChatMessage decodeChatMessage(Serialize::ChatMessage& msg)
+{
+    Serialize::userChatMessage userChatMessage;
+    msg.mutable_payload()->UnpackTo(&userChatMessage);
+
+    if(!userChatMessage.has_message())
+        return {};
+
+    const Serialize::userMessage& message = userChatMessage.message();
+    if(!message.has_timestamp())
+        return {};
+
+    Database::userChatMessage packMessage;
+    packMessage.dbName = std::move(userChatMessage.dbname());
+    packMessage.chatTitle = std::move(userChatMessage.chattitle());
+
+    packMessage.message.userNickName = std::move(message.usernickname());
+    packMessage.message.userMessage = std::move(message.usermessage());
+    packMessage.message.timestamp =
+        google::protobuf::util::TimeUtil::TimestampToMilliseconds(message.timestamp());
+
+    return packMessage;
 }

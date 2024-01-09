@@ -4,6 +4,7 @@
 #include "authutils.h"
 #include "../../Server/src/common_types.h"
 #include "coordinatorinterface.h"
+const std::string path{"../../Server/data/config.json"};
 
 ServerCommunicator::ServerCommunicator(NetworkCoordinatorInterface& coord, QObject *parent)
     : QObject(parent),
@@ -12,7 +13,11 @@ ServerCommunicator::ServerCommunicator(NetworkCoordinatorInterface& coord, QObje
     connect(&m_webSocket, &QWebSocket::connected, this, &ServerCommunicator::onConnected);
     connect(&m_webSocket, &QWebSocket::disconnected, this, &ServerCommunicator::onDisconnected);
 
-    QString host = getHost();
+    host = getHost(path);
+}
+
+void ServerCommunicator::connectToHost()
+{
     m_webSocket.open(QUrl(host));
 }
 
@@ -115,5 +120,11 @@ void ServerCommunicator::sendCreateChatMessage(const std::string& dbName, const 
 void ServerCommunicator::sendMessageToChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName, const std::string& message)
 {
     std::string res = createInfoChatMessage(dbName, chatCollectionName, nickName, message);
+    m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
+}
+
+void ServerCommunicator::sendGetMessageTapeFromChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName)
+{
+    std::string res = createGetChatTapeMessage(dbName, chatCollectionName, nickName);
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
 }

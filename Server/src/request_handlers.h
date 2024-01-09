@@ -17,6 +17,10 @@ void handleCreateChat(websocket_session& session, Serialize::ChatMessage& msg);
 void handleAddUserToChat(websocket_session& session, Serialize::ChatMessage& msg);
 void handleDeleteUserFromChat(websocket_session& session, Serialize::ChatMessage& msg);
 void handleGetChatsUserBelongsTo(websocket_session& session, Serialize::ChatMessage& msg);
-void handleAddMessageToDatabase(websocket_session& session, Serialize::ChatMessage& msg);
+bool handleAddMessageToDatabase(websocket_session& session, Serialize::ChatMessage& msg);
 void translateMessageToParticipants(websocket_session& session, Serialize::ChatMessage& msg);
 void handleSendChatTapeToClient(websocket_session& session, Serialize::ChatMessage& msg);
+void handleAddMessageToChat(websocket_session& session, Serialize::ChatMessage& msg);
+void handleDeleteAllMessagesFromChat(const std::string& dbName, const std::string& chatCollName);
+
+bool userBelongsToChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& userNickname);

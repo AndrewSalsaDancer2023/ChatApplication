@@ -65,14 +65,8 @@ inline bool bsonElementToBoolean(const bsoncxx::document::element& element)
 
 inline int64_t bsonElementToTimePoint(const bsoncxx::document::element& element)
 {
- //   return time_point_cast<std::chrono::milliseconds>(element.get_int64());
-    //return time_point(element);
-//    return std::chrono::system_clock::time_point{ element.get_int64()};
-    return element.get_int64();
+    return element.get_date().to_int64();
 }
-
-// 	operator std::chrono::system_clock::time_point () const
-//auto time = bsoncxx::types::b_date(std::chrono::system_clock::now());
 
 std::optional<Database::userAuthInfo> findUserAuthInfo(const mongocxx::database& db, const std::string& usersCollectionName, const std::string& userNick)
 {
@@ -196,30 +190,6 @@ bsoncxx::document::value createChatDocument(const std::string& nickName, const s
 
     return document;
 }
-/*
-std::vector<Database::chatMessage> getChatDocuments(const mongocxx::database& db, const std::string& chatTitle)
-{
-    std::vector<Database::chatMessage> result;
-    if(!hasCollection(db, chatTitle))
-        return result;
-
-    auto collection = db[chatTitle];
-    auto all_documents = collection.find({});
-
-    for (auto& doc : all_documents)
-    {
-    	Database::chatMessage curMsg;
-
-        curMsg.message.userNickName = bsonElementToString(doc["from"]);
-        curMsg.message.userMessage = bsonElementToString(doc["message"]);
-        curMsg.message.time = bsonElementToTimePoint(doc["time"]);
-
-        result.push_back(curMsg);
-    }
-
-    return result;
-}
-*/
 
 Database::chatMessagesTape getChatDocuments(const mongocxx::database& db, const std::string& dbName, const std::string& chatTitle)
 {
@@ -232,7 +202,7 @@ Database::chatMessagesTape getChatDocuments(const mongocxx::database& db, const 
 
     auto collection = db[chatTitle];
     auto all_documents = collection.find({});
-
+    std::cout << "getChatDocuments" << std::endl;
     for (auto& doc : all_documents)
     {
     	Database::singleUserMessage curMsg;
@@ -465,6 +435,22 @@ bool addMessageToChat(const mongocxx::database& db, const std::string& chatColle
 	   return false;
 
    return true;
+}
+
+bool deleteAllMessagesFromChat(const mongocxx::database& db, const std::string& chatCollectionName)
+{
+	  if(!hasCollection(db, chatCollectionName))
+	        return false;
+
+	  auto collection = db[chatCollectionName];
+	  auto result = collection.delete_many({});
+
+	  if(!result)
+		  return false;
+
+	 std::cout << "deleteAllMessagesFromChat :"	<< (*result).result().deleted_count() << std::endl;
+
+	  return ((*result).result().deleted_count() > 0);
 }
 /*
  * auto update_many_result =

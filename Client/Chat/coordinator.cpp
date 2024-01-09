@@ -1,13 +1,17 @@
 #include "coordinator.h"
 #include "../../DatabaseAdmin/AdminTool/ServerCommunication/messageserialization.h"
 #include "../../DatabaseAdmin/AdminTool/ServerCommunication/authutils.h"
-#include "../../Server/src/database/DatabaseTypes.h"
-#include <google/protobuf/util/time_util.h>
+#include "commonutils.h"
+#include <set>
+
+const std::string configPath{"../../Server/data/config.json"};
+const QString authPath{"./auth.json"};
+const QString roomsCollName = "chatrooms";
+const QString usersCollName = "users";
+
 Coordinator::Coordinator(QObject *parent) :
     QObject(parent)
 {
-    serverCommunicator = std::make_unique<ServerCommunicator>(*this);
-
     handlers[static_cast<::google::protobuf::uint32>(PayloadType::CLIENT_AUTHENTICATION_APPROVED)] =
             [this](Serialize::ChatMessage& msg)
          {
@@ -101,28 +105,36 @@ Coordinator::Coordinator(QObject *parent) :
 
 
     connect(&chats, SIGNAL(itemSelected(std::string)), this, SLOT(onChatSelected(std::string)));
-//    connect(this, SIGNAL(weatherImageObtained(QString, unsigned)), this, SLOT(setForecastImage(QString, unsigned)));
-     /*
-     simplModel.setStringList(QStringList()
-                                            << "Bill Smith"
-                                            << "John Brown"
-                                            << "Sam Wise"
-                                            << "Ben Afleck"
-                              << "Bill Smith"
-                              << "John Brown"
-                              << "Sam Wise"
-                              << "Ben Afleck");
 
-    PersonInfo one{"Bill Smith", "555 3264"};
-    PersonInfo two{"John Brown", "555 8426"};
-    PersonInfo three{"Sam Wise", "555 0473"};
-    PersonInfo four{"Ben Afleck", "444 0478"};
-
-    chats.addData(one);
-    chats.addData(two);
-    chats.addData(three);
-    chats.addData(four); */
+    conTimer = std::make_unique<QTimer>();
+    connect(conTimer.get(), &QTimer::timeout, this, &Coordinator::onConnectionTimeout);
+    serverCommunicator = std::make_unique<ServerCommunicator>(*this);
+    serverCommunicator->connectToHost();
 }
+
+ void Coordinator::tryToLogin()
+ {
+     if(isFileExists(authPath))
+     {
+         emit showBusyIndicator();
+         const auto& [login, password, database] = getClientAuthentication(authPath.toStdString());
+         if(!login.empty() && !password.empty() && ! database.empty())
+         {
+            nickName = QString::fromStdString(login);
+            databaseName = QString::fromStdString(database);
+            usrPassword = QString::fromStdString(password);
+
+            sendAuthorizeMessage(login, password, database);
+            return;
+         }
+     }
+     emit showLoginForm();
+ }
+
+ void Coordinator::onConnectionTimeout()
+ {
+    serverCommunicator->connectToHost();
+ }
 
 void Coordinator::onChatSelected(std::string item)
 {
@@ -131,24 +143,90 @@ void Coordinator::onChatSelected(std::string item)
 
 void Coordinator::mainWindowLoaded()
 {
-    QString dbName = "mydb", collName = "chatrooms", nickName = "batman";
-    sendGetChatsContainUserMessage(dbName, collName, nickName);
-
-    QString usersCollName = "users";
-    sendGetAllUsersMessage(dbName.toStdString(), usersCollName.toStdString());
+    sendGetAllUsersMessage(databaseName.toStdString(), usersCollName.toStdString());
 }
 
+std::optional<Participant> getParticipant(const std::string& name, const std::string& surname, const std::vector<Database::userInfo>& allUsers)
+{
+       auto it = std::find_if(allUsers.begin(), allUsers.end(), [&name, & surname](const auto& user){
+               return (user.name == name) && (user.surname == surname);
+            });
+
+        if(it != allUsers.end())
+            return Participant{(*it).name, (*it).surname, (*it).nickname};
+
+    return {};
+}
+
+void Coordinator::prepareUsersLists(int index)
+{
+    if(index < 0)
+        return;
+
+    curParticipants.removeAllData();
+    allUsers.removeAllData();
+
+    QString title = chats.getItem(index);
+    std::set<std::string> nicknames;
+     std::set<Participant> usrs;
+    for(int i = 0; i < members.rowCount(); ++i)
+    {
+        const auto& part = members.getItem(i);
+        nicknames.insert(part.nickname);
+        curParticipants.addData(part);
+    }
+
+    for(const auto& user: users)
+    {
+        auto it = nicknames.find(user.nickname);
+        if(it != nicknames.end())
+            continue;
+
+        allUsers.addData(Participant{user.name, user.surname, user.nickname});
+    }
+}
+
+void Coordinator::removeParticipant(const QString& nickName)
+{
+    auto part = curParticipants.getParticipant(nickName);
+    if(!part)
+        return;
+    curParticipants.removeParticipant(nickName);
+    allUsers.addData(*part);
+}
+
+void Coordinator::addParticipant(const QString& nickName)
+{
+    auto part = allUsers.getParticipant(nickName);
+    if(!part)
+        return;
+    allUsers.removeParticipant(nickName);
+    curParticipants.addData(*part);
+}
+
+bool Coordinator::hasCorrectChatParticipants()
+{
+    return false;
+}
 
 void Coordinator::onDisconnected()
 {
+    if(conTimer)
+    {
+        conTimer->stop();
+        conTimer->start(10'000);
+    }
     state = commState::Disconnected;
-    QString message = "Socket disconnected!";
-//    interface.showMessage(message);
+
+    emit showBusyIndicator();
 }
 
 void Coordinator::onConnected()
 {
     state = commState::Connected;
+    conTimer->stop();
+    emit hideBusyIndicator();
+    tryToLogin();
 }
 
 void Coordinator::messageReceived(Serialize::ChatMessage& message)
@@ -164,19 +242,29 @@ void Coordinator::handleAuthenticationSuccess(Serialize::ChatMessage& msg)
        (static_cast<::google::protobuf::uint32>(PayloadType::CLIENT_AUTHENTICATION_APPROVED) == msg.payload_type_id()))
     {
        state = commState::Authenticated;
+       if(loginScreenShown)
+        saveClientAuthentication(authPath.toStdString(), nickName.toStdString(), usrPassword.toStdString(), databaseName.toStdString());
        emit authSuccess();
-/*       setAuthorized(true);
-       emit clientAuthorized(true);*/
     }
 }
-
+/*
+void Coordinator::saveAuthData()
+{
+    saveClientAuthentication(authPath.toStdString(), nickName.toStdString(), usrPassword.toStdString(), databaseName.toStdString());
+    serializeAuthDataToString(nickName.toStdString(), usrPassword.toStdString(),
+                                                databaseName.toStdString());
+}
+*/
 void Coordinator::handleAuthenticationError(Serialize::ChatMessage& msg)
 {
-     QString message = "Authentication failed!";
-    // interface.showMessage(message);
-     emit authError(message);
-/*     setAuthorized(false);
-     emit clientAuthorized(false);*/
+    if(loginScreenShown)
+    {
+        emit hideBusyIndicator();
+        QString message = "Authentication failed!";
+        emit authError(message);
+    }
+    else
+        emit showLoginForm();
 }
 
 void Coordinator::handleAddUserToChatSuccess(Serialize::ChatMessage& msg)
@@ -208,7 +296,7 @@ void Coordinator::handleCreateChatMessageError(Serialize::ChatMessage& msg)
 {
 
 }
-
+//refactor
 void Coordinator::handleGetChatsUserBelongsSuccess(Serialize::ChatMessage& msg)
 {
   if(!msg.has_payload())
@@ -216,8 +304,6 @@ void Coordinator::handleGetChatsUserBelongsSuccess(Serialize::ChatMessage& msg)
 
   Serialize::chatInfoArray chatsInfo;
   msg.mutable_payload()->UnpackTo(&chatsInfo);
-
-//  std::vector<Database::chatInfo> result;
 
   for(int i = 0; i < chatsInfo.chats_size(); ++i)
   {
@@ -228,12 +314,12 @@ void Coordinator::handleGetChatsUserBelongsSuccess(Serialize::ChatMessage& msg)
      for(int j = 0 ; j < curInfo.participants_size(); ++j)
      {
          curChat.participants.push_back(curInfo.participants(j));
-         participants.addData(curInfo.participants(j));
+         if(auto res = getUserInfo(users, curInfo.participants(j)))
+            members.addData(*res);
      }
-     chats.addData(curChat.title);//curChat);
-//     result.push_back(curChat);
+     chats.addData(curChat.title);
   }
-
+  getChatTapes();
   emit changeSendButtonState();
 }
 
@@ -247,36 +333,8 @@ void Coordinator::setAuthenticationData(QString login, QString password, QString
 {
    nickName = login;
    databaseName = dbName;
+   usrPassword = password;
    sendAuthorizeMessage(nickName.toStdString(), password.toStdString(), databaseName.toStdString());
-}
-
-void Coordinator::getUsers(Serialize::UserInfoVector& elements)
-{
-    users.clear();
-    for(int i = 0; i < elements.users_size(); ++i)
-    {
-        const Serialize::UserInfo& usrInfo = elements.users(i);
-
-        Database::userInfo user;
-        user.name = std::move(usrInfo.name());
-        user.surname = std::move(usrInfo.surname());
-        user.email = std::move(usrInfo.email());
-        user.nickname = std::move(usrInfo.nickname());
-        user.password = std::move(usrInfo.password());
-        user.profilepicture = std::move(usrInfo.profilepicture());
-        user.deleted = usrInfo.deleted();
-
-        users.push_back(user);
-    }
-}
-
-std::vector<std::string> Coordinator::getUsersNicknames()
-{
-    std::vector<std::string> res;
-    for(const auto& elem : users)
-        res.push_back(elem.nickname);
-
-    return res;
 }
 
 void Coordinator::handleGetUsersInfoSuccess(Serialize::ChatMessage& msg)
@@ -287,7 +345,8 @@ void Coordinator::handleGetUsersInfoSuccess(Serialize::ChatMessage& msg)
      Serialize::UserInfoVector elements;
      msg.mutable_payload()->UnpackTo(&elements);
 
-     getUsers(elements);
+     users = std::move(getUsers(elements));
+     sendGetChatsContainUserMessage(databaseName, roomsCollName, nickName);
 }
 
 void Coordinator::handleGetUsersInfoError(Serialize::ChatMessage& msg)
@@ -301,52 +360,24 @@ void Coordinator::handleGetUsersInfoError(Serialize::ChatMessage& msg)
 
 void Coordinator::handleGetMessageFromChat(Serialize::ChatMessage& msg)
 {
-    Serialize::userChatMessage userChatMessage;
-    msg.mutable_payload()->UnpackTo(&userChatMessage);
-
-    if(!userChatMessage.has_message())
-         return;
-
-    const Serialize::userMessage& message = userChatMessage.message();
-    if(!message.has_timestamp())
+    const auto& decodedMsg = decodeChatMessage(msg);
+    if((databaseName.toStdString() != decodedMsg.dbName) || (!chats.containsData(decodedMsg.chatTitle)))
         return;
-
-    Database::userChatMessage packMessage;
-    packMessage.dbName = std::move(userChatMessage.dbname());
-    packMessage.chatTitle = std::move(userChatMessage.chattitle());
-
-
-    packMessage.message.userNickName = std::move(message.usernickname());
-    packMessage.message.userMessage = std::move(message.usermessage());
-    packMessage.message.timestamp =
-        google::protobuf::util::TimeUtil::TimestampToMilliseconds(message.timestamp());
-
-//    check chattitle
-    if(databaseName.toStdString() != packMessage.dbName)
-        return;
+     convModel.addData(decodedMsg.message);
 }
 
 void Coordinator::handleGetMessageTapeFromChat(Serialize::ChatMessage& msg)
 {
-    Serialize::chatTape chatTape;
-    msg.mutable_payload()->UnpackTo(&chatTape);
+    Database::chatMessagesTape tape = decodeMessageTapeFromChat(msg);
 
-    auto dbName = std::move(chatTape.dbname());
-    if(databaseName.toStdString() != dbName)
+    if(databaseName.toStdString() != tape.dbName)
         return;
 
-    auto chatTitle = std::move(chatTape.chattitle());
-    //add chat title check
+    if(!chats.containsData(tape.chatTitle))
+        return;
 
-
-    int numMessages = chatTape.messages_size();
-    for(int i = 0; i < numMessages; ++i)
-    {
-        const Serialize::userMessage& curMessage = chatTape.messages(i);
-        auto nick = curMessage.usernickname();
-        auto message = curMessage.usermessage();
-        auto tstamp = google::protobuf::util::TimeUtil::TimestampToMilliseconds(curMessage.timestamp());
-    }
+    for(const auto& msg : tape.messages)
+        convModel.addData(msg);
 }
 
 void Coordinator::handleGetMessageTapeFromChatError(Serialize::ChatMessage& msg)
@@ -357,63 +388,6 @@ void Coordinator::handleGetMessageTapeFromChatError(Serialize::ChatMessage& msg)
     emit showError(outmsg);
 }
 
-/*
-void coordinator::selectCurrentUserInList()
-{
-    if(!userSelected)
-        return;
-
-    auto nickname = (*userSelected).nickname;
-    auto itFind = std::find_if(users.begin(), users.end(),[&nickname](const auto& user){
-        return user.nickname == nickname;
-    });
-
-    if(itFind == users.end())
-        return;
-
-    auto dist = std::distance(users.begin(), itFind);
-
-    interface.selectUserFromList(dist);
-    interface.setNickNameEditable(false);
-}
-
-void coordinator::handleAddUserInfo(Serialize::ChatMessage& msg)
-{
-    const std::string& nickName = msg.sender();
-    auto itFind = std::find_if(users.begin(), users.end(),[&nickName](const auto& user){
-            return user.nickname == nickName;
-    });
-
-    if((itFind != users.end()) || !userSelected)
-        return;
-
-    if((*userSelected).nickname != nickName)
-        return;
-
-    users.push_back(*userSelected);
-    interface.fillUsersList(getUsersNicknames());
-    selectCurrentUserInList();
-}
-
-void coordinator::handleAddUserInfoError(Serialize::ChatMessage& msg)
-{
-    const std::string& nickName = msg.sender();
-    std::string message = "Unable add user:" + nickName;
-    QString outmsg = QString::fromStdString(message);
-    interface.showMessage(outmsg);
-}
-
-std::vector<std::string> coordinator::getElements(const Serialize::StringVector& elements)
-{
-    std::vector<std::string> res;
-
-    int size = elements.value_size();
-    for(int i = 0; i < size; ++i)
-        res.push_back(elements.value(i));
-
-    return res;
-}
-*/
 std::optional<Database::userInfo> Coordinator::findSelectedUser(const std::string& nick)
 {
 /*    auto it = std::find_if(users.begin(), users.end(), [&nick](const auto& user){
@@ -463,7 +437,7 @@ void Coordinator::sendGetDBNamesMessage()
 
 void Coordinator::sendAuthorizeMessage(const std::string& dbName)
 {
-    const auto&[login, password] = getLoginPassword();
+    const auto&[login, password] = getLoginPassword(configPath);
     sendAuthorizeMessage(login, password, dbName);
 }
 
@@ -500,7 +474,22 @@ void Coordinator::sendChatMessage(const QString& channel, const QString& text)
 {
     if(text.isEmpty())
         return;
-    //QString dbName = "mydb", collName = "chatrooms", nickName = "batman";
+     emit clearMessageField();
+
     serverCommunicator->sendMessageToChat(databaseName.toStdString(), channel.toStdString(), nickName.toStdString(), text.toStdString());
+}
+
+void Coordinator::getChatTapes()
+{
+    for(int i = 0 ; i < chats.rowCount(); ++i)
+        getChatTape(chats.getItem(i));
+}
+
+void Coordinator::getChatTape(const QString& channel)
+{
+    if(channel.isEmpty())
+        return;
+
+    serverCommunicator->sendGetMessageTapeFromChat(databaseName.toStdString(), channel.toStdString(), nickName.toStdString());
 }
 

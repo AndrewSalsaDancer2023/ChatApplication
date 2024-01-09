@@ -4,31 +4,44 @@ import QtQuick 2.12
 
 Component {
     id: participantDelegate
-    Rectangle {
+     Rectangle {
         id: wrapper
 //        id: participantDelegate
-        width: contactInfo.width + addContactBtn.width + 15
+//        width: contactInfo.width + addContactBtn.width + 15
         color: "lightblue"
         height: contactInfo.height + 12
         radius : 5
         Row {
             id: infoRow
+            spacing: 5
             anchors.fill: parent
-//            width: parent.width
-            spacing: 15
-        Text {
-            id: contactInfo
-            text: name
-            width: 100
-            clip:true
             anchors.verticalCenter: parent.verticalCenter
-            color: "black"
-        }
+//            width: parent.width
+//            spacing: 15
+            Row {
+            width: 150
+            clip:true
+            spacing: 5
+            Text {
+                id: contactInfo
+                text: surname
+    //            width: 100
+    //            clip:true
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            Text {
+                text: name
+                anchors.verticalCenter: parent.verticalCenter
+            }
+           }
         Button {
             id: addContactBtn
             anchors.verticalCenter: parent.verticalCenter
             text: "Add";
-            onClicked: console.log("add participant")
+            onClicked: {
+                Coordinator.addParticipant(nickname)
+                console.log(nickname)
+            }
         }
       }
     }

@@ -52,6 +52,18 @@ struct userAuthInfo
     std::string nickname;
     std::string password;
 };
+
+struct Participant
+{
+    std::string name;
+    std::string surname;
+    std::string nickname;
+    bool operator == (const Participant& other)
+    {
+        return (name == other.name) && (surname == other.surname) && (nickname == other.nickname);
+    }
+};
+
 /*
 struct userMessage
 {

@@ -32,10 +32,15 @@ QString readJsonFromFile(const QString& path)
     return content;
 }
 
-QString getHost()
+bool isFileExists(const QString& path)
 {
-    QString path{"../../Server/data/config.json"};
-    auto content = readJsonFromFile(path);
+    QFile file(path);
+    return file.exists();
+}
+
+QString getHost(const std::string& path)
+{
+    auto content = readJsonFromFile(QString::fromStdString(path));
     Serialize::ConnectionData data = getConnectionDataFromString(content.toStdString());
     if(!data.has_connectionparameters())
         return {};
@@ -43,10 +48,9 @@ QString getHost()
     return QString::fromStdString(parameters.host()) + ':' + QString::number(parameters.port());
 }
 
-std::pair<std::string, std::string> getLoginPassword()
+std::pair<std::string, std::string> getLoginPassword(const std::string& path)
 {
-    QString path{"../../Server/data/config.json"};
-    auto content = readJsonFromFile(path);
+    auto content = readJsonFromFile(QString::fromStdString(path));
     Serialize::ConnectionData data = getConnectionDataFromString(content.toStdString());
     if(!data.has_authentication())
         return {};
@@ -54,13 +58,16 @@ std::pair<std::string, std::string> getLoginPassword()
     return { auth.login(),  auth.password()};
 }
 
-int64_t getCurrentTimeInNanoseconds()
+void saveClientAuthentication(const std::string& path, const std::string& login, const std::string& password, const std::string& database)
 {
-/*    std::chrono::time_point<std::chrono::system_clock> timepoint = std::chrono::system_clock::now();
-    std::chrono::seconds ns =
-    std::chrono::duration_cast<std::chrono::seconds>(timepoint.time_since_epoch()).count();
-    return ns;
-*/
-    int64_t timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    return timestamp;
+    auto content = serializeAuthDataToString(login, password, database);
+    saveJsonToFile(QString::fromStdString(path), QString::fromStdString(content));
+}
+
+std::tuple<std::string, std::string, std::string> getClientAuthentication(const std::string& path)
+{
+    auto content = readJsonFromFile(QString::fromStdString(path));
+    Serialize::Login data = getAuthDataFromString(content.toStdString());
+
+    return {data.login(), data.password(), data.database()};
 }

@@ -17,7 +17,7 @@ public:
     StringListModel(QObject *parent = 0);
 
     void addData(const std::string& info);
-
+    bool containsData(const std::string& info);
     Q_INVOKABLE void addSampleData();
     Q_INVOKABLE bool changeSampleData(const QString& name);
     Q_INVOKABLE bool notEmpty() { return m_chats.count() > 0; }

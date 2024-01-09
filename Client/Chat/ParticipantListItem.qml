@@ -8,17 +8,18 @@ Component {
         width: participantInfo.width + 6//parent.width
         height: participantInfo.height + 6
         radius : 5
-        color: ListView.isCurrentItem ? "black" : "red"
-//        color: "blue"
-        Text {
+        color: "lightblue"
+        Row {
             id: participantInfo
-//            text: name + ": " + number
-            text: title
-//            text: model.display
-//            color: wrapper.ListView.isCurrentItem ? "red" : "black"
-            anchors.verticalCenter: parent.verticalCenter
-//            anchors.left: parent.left
-//            anchors.leftMargin: 5
+            spacing: 5
+            Text {
+                text: surname
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            Text {
+                text: name
+                anchors.verticalCenter: parent.verticalCenter
+            }
         }
 /*
         MouseArea {

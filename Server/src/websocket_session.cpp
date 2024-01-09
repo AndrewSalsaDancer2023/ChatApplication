@@ -83,6 +83,9 @@ try{
     std::string resvdData = beast::buffers_to_string(buffer_.data());
 //    ws_.binary(true);    
     std::cout << "resvdData: " << resvdData << std::endl;
+    /*std::string dbName = "mydb";
+    std::string chatCollName = "news";
+    handleDeleteAllMessagesFromChat(dbName, chatCollName);*/
     auto msg = decodeMessageFromString(resvdData);
     if(static_cast<::google::protobuf::uint32>(PayloadType::CLIENT_AUTHENTICATION) == msg.payload_type_id())
     {
@@ -150,8 +153,7 @@ try{
     else
     	if(static_cast<::google::protobuf::uint32>(PayloadType::CLIENT_SEND_MESSAGE_TO_CHAT) == msg.payload_type_id())
     	{
-    		handleAddMessageToDatabase(*this, msg);
-    		translateMessageToParticipants(*this, msg);
+    		handleAddMessageToChat(*this, msg);
     	}
     	else
     		if(static_cast<::google::protobuf::uint32>(PayloadType::CLIENT_REQUEST_MESSAGE_TAPE_FOR_CHAT) == msg.payload_type_id())

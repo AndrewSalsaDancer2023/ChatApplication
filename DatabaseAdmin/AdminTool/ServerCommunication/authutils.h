@@ -10,6 +10,8 @@
 
 void saveJsonToFile(const QString& path, const QString& fileContent);
 QString readJsonFromFile(const QString& path);
-QString getHost();
-std::pair<std::string, std::string> getLoginPassword();
-int64_t getCurrentTimeInNanoseconds();
+QString getHost(const std::string& path);
+std::pair<std::string, std::string> getLoginPassword(const std::string& path);
+void saveClientAuthentication(const std::string& path, const std::string& login, const std::string& password, const std::string& database);
+std::tuple<std::string, std::string, std::string> getClientAuthentication(const std::string& path);
+bool isFileExists(const QString& path);

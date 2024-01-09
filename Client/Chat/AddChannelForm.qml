@@ -48,8 +48,19 @@ Rectangle {
     Row {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 15
-                 Button { text: "Create"; onClicked: console.log("submit") }
-                 Button { text: "Cancel"; onClicked: console.log("cancellation") }
+                 Button {
+                     text: "Create";
+                     onClicked: {
+                         console.log("submit")
+                         stackView.pop()
+                     }
+                 }
+                 Button {
+                     text: "Cancel";
+                     onClicked: {
+                         console.log("cancellation")
+                         stackView.pop()                     }
+                 }
        }
     }
 }

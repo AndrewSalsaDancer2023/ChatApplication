@@ -6,27 +6,37 @@ Component {
     id: memberDelegate
     Rectangle {
         id: wrapper
-        width: contactInfo.width + addContactBtn.width + 15
+//        width: contactInfo.width + addContactBtn.width + 15
         color: "lightgreen"
         height: contactInfo.height + 12
         radius : 5
         Row {
             id: infoRow
+            spacing: 5
             anchors.fill: parent
-            spacing: 15
-        Text {
-            id: contactInfo
-            text: name
-            width: 100
+//            spacing: 15
+        Row {
+            width: 150
             clip:true
-            anchors.verticalCenter: parent.verticalCenter
-            color: "black"
+            spacing: 5
+            Text {
+                id: contactInfo
+                text: surname
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            Text {
+                text: name
+                anchors.verticalCenter: parent.verticalCenter
+            }
         }
         Button {
             id: addContactBtn
             anchors.verticalCenter: parent.verticalCenter
             text: "Remove";
-            onClicked: console.log("remove member")
+            onClicked: {
+                console.log(nickname)
+                Coordinator.removeParticipant(nickname);
+            }
         }
       }
     }

@@ -3,6 +3,8 @@
 #include <QQmlContext>
 #include "authenticationform.h"
 #include "stringlistmodel.h"
+#include "conversationmodel.h"
+#include "participantmodel.h"
 #include "coordinator.h"
 
 #include <iostream>
@@ -11,7 +13,9 @@
 #include <sstream>
 #include <iomanip>
 #include  <initializer_list>
-#include <chrono>
+//#include <chrono>
+#include <cstdint>
+#include <cinttypes>
 /*
 template <typename T>
 void f(T v)
@@ -36,15 +40,6 @@ void f(T v)
 //https://www.youtube.com/watch?v=DS2m7T6NKZQ
 //https://www.youtube.com/playlist?list=PLS0ecZsqDIUyAWsk63m8lB6o6-udJD724
 
-std::string getTimeStr()
-{
-    std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-
-    std::string s(50, '\0');
-    std::strftime(&s[0], s.size(), "%H:%M:%S %Y-%m-%d", std::localtime(&now));
-//     std::strftime(&s[0], s.size(), "%d-%m-%Y %H:%M:%S", std::localtime(&now));
-    return s;
-}
 //https://techoverflow.net/2023/07/31/how-to-convert-stdchronotime_point-to-seconds-since-epoch/
 int main(int argc, char *argv[])
 {
@@ -56,21 +51,6 @@ int main(int argc, char *argv[])
 //    qmlRegisterType<Coordinator>("Coordinator", 1, 0, "Coordinator");
 //    qmlRegisterType<ChatListModel>("ChatListModel", 1, 0, "chatsList");
     QQmlApplicationEngine engine;
-
-    /*
-    PersonInfo one{"Bill Smith", "555 3264"};
-    PersonInfo two{"John Brown", "555 8426"};
-    PersonInfo three{"Sam Wise", "555 0473"};
-
-    ChatListModel chatList;
-
-    chatList.addData(one);
-    chatList.addData(two);
-    chatList.addData(three);
-
-    QQmlContext *ctxt = engine.rootContext();
-    ctxt->setContextProperty("chatsList", &chatList);
-*/
     Coordinator coord;
     QQmlContext *ctxt = engine.rootContext();
     ctxt->setContextProperty("Coordinator", &coord);
@@ -78,9 +58,17 @@ int main(int argc, char *argv[])
     StringListModel& chatList = coord.getChatsList();
     ctxt->setContextProperty("chatsList", &chatList);
 
-    StringListModel& partcpants = coord.getParticipantsList();
-//    QStringListModel& partcpants = coord.getParticipantsList();
-    ctxt->setContextProperty("participantsList", &partcpants);
+    ParticipantModel& members = coord.getMembersList();
+    ctxt->setContextProperty("members", &members);
+
+    ConversationModel& conversation = coord.getConversationModel();
+    ctxt->setContextProperty("conversation", &conversation);
+
+    ParticipantModel& allUsers = coord.getAllUsers();
+    ctxt->setContextProperty("allUsers", &allUsers);
+
+    ParticipantModel& participants = coord.getParticipants();
+    ctxt->setContextProperty("participants", &participants);
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
@@ -93,20 +81,6 @@ int main(int argc, char *argv[])
     return app.exec();
 }
 /*
-void saveToCollection(mongocxx::collection& collection, int aqi)
-{
-    auto timeStamp = bsoncxx::types::b_date(std::chrono::system_clock::now());
-
-
-    bsoncxx::builder::stream::document aqiDoc = bsoncxx::builder::stream::document{};
-    aqiDoc << "timestamp" << timeStamp << "aqi" << aqi;
-    collection.insert_one(aqiDoc.view());
-
-
-    // Log to the console window.
-    cout << " TimeStamp: " << timeStamp << " AQI: " << aqi << endl;
-}
-
 bsoncxx::document::value createChatDocument(const Database::chatMessage& curMsg)
 {
     auto time = bsoncxx::types::b_date(curMsg.message.time);
@@ -114,36 +88,13 @@ bsoncxx::document::value createChatDocument(const Database::chatMessage& curMsg)
 
     return document;
 }
+corutines
+https://habr.com/ru/companies/piter/articles/491996/
+https://habr.com/ru/companies/yandex/articles/420861/
+https://habr.com/ru/companies/ruvds/articles/755246/
+https://habr.com/ru/companies/wunderfund/articles/582000/
 
-struct userMessage
-{
-    std::string userNickName;
-    std::string userMessage;
-    std::chrono::time_point<std::chrono::system_clock> time;
-//    std::chrono::time_point<std::chrono::high_resolution_clock> time;
-};
-
-struct chatMessage
-{
-    std::string chatTitle;
-    userMessage message;
-    std::vector<userMessage> comments;
-};
-
-http://mongocxx.org/api/mongocxx-3.0.0/types_8hpp_source.html
-
-https://protobuf.dev/reference/cpp/api-docs/google.protobuf.util.time_util/
-https://stackoverflow.com/questions/48065142/how-do-i-rebuild-a-date-from-protobuf-timestamp-in-c
-#include <chrono>
-
-Settings s;
-
-if (s.has_timestamp()) {
-    chrono::nanoseconds ns = chrono::nanoseconds(google::protobuf::util::TimeUtil::TimestampToNanoseconds(s.timestamp()));
-    chrono::time_point<chrono::system_clock> timestamp(ns);
-}
 */
-
 //http://thisthread.blogspot.com/2018/03/boost-asio-strand-example.html
 //https://copyprogramming.com/howto/what-is-the-advantage-of-strand-in-boost-asio
 //https://habr.com/ru/articles/195006/ https://zhaowuluo.wordpress.com/2010/12/25/multithreading-boostasio/

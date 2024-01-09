@@ -90,7 +90,7 @@ message userChatMessage
 	userMessage message = 3;
 }
 
-message chatMessages
+message chatTape
 {
 	string dbName = 1;
 	string chatTitle = 2;

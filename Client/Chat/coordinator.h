@@ -1,16 +1,19 @@
 #pragma once
 
 #include <QObject>
-#include <string>
+#include <QTimer>
 #include "../../DatabaseAdmin/AdminTool/ServerCommunication/coordinatorinterface.h"
 #include "../../Server/src/common_types.h"
 #include "../../Server/src/database/DatabaseTypes.h"
 #include "../../Server/build/messages.pb.h"
+#include "../../DatabaseAdmin/AdminTool/ServerCommunication/servercommunicator.h"
+#include "stringlistmodel.h"
+#include "conversationmodel.h"
+#include "participantmodel.h"
+#include <string>
 #include <map>
 #include <functional>
 #include <set>
-#include "../../DatabaseAdmin/AdminTool/ServerCommunication/servercommunicator.h"
-#include "stringlistmodel.h"
 #include <memory>
 
 enum class commState
@@ -24,22 +27,21 @@ namespace Database
 {
     struct userInfo;
 };
-//class MainWindowInterface;
+
 //https://blog.felgo.com/cross-platform-app-development/how-to-expose-a-qt-cpp-class-with-signals-and-slots-to-qml#how-to-register-your-cpp-class-as-a-qml-type
 class Coordinator : public QObject, public NetworkCoordinatorInterface
 {
     Q_OBJECT
     Q_PROPERTY(bool authorized READ isAuthorized WRITE setAuthorized NOTIFY clientAuthorized)
-//     Q_PROPERTY(ChatListModel chatsList READ chatsList WRITE setChatsList NOTIFY chatsListChanged)
+
 public:
-//    explicit coordinator(MainWindowInterface& window, QObject *parent = nullptr);
     explicit Coordinator(QObject *parent = nullptr);
     void onDisconnected() override ;
     void onConnected() override;
 
     void messageReceived(Serialize::ChatMessage& message) override ;
     std::optional<Database::userInfo> findSelectedUser(const std::string& nick) override;
-    std::vector<std::string> getUsersNicknames();
+//    std::vector<std::string> getUsersNicknames();
     void sendGetDBCollectionNamesRequest(const std::string& dbName) override;
     void sendGetAllUsersMessage(const std::string& dbName, const std::string& collName) override;
     void sendDeleteSelectedUserMessage(const std::string& dbName, const std::string& collName) override;
@@ -56,26 +58,42 @@ public:
     Q_INVOKABLE void setAuthenticationData(QString login, QString password, QString dbName);
     Q_INVOKABLE void mainWindowLoaded();
     Q_INVOKABLE void sendChatMessage(const QString& channel, const QString& text);
+    Q_INVOKABLE void setLoginScreenShown(bool shown) { loginScreenShown = shown; }
+    Q_INVOKABLE void prepareUsersLists(int index);
+
+    Q_INVOKABLE void removeParticipant(const QString& nickName);
+    Q_INVOKABLE void addParticipant(const QString& nickName);
+    Q_INVOKABLE bool hasCorrectChatParticipants();
+
+    void getChatTape(const QString& channel);
+    void getChatTapes();
     bool isAuthorized() { return authorized; }
     void setAuthorized(bool res) { authorized = res; };
 
-//    ChatListModel chatsList() {return chats;}
     StringListModel& getChatsList() { return chats; }
-    StringListModel& getParticipantsList() { return participants; }
-//    QStringListModel& getParticipantsList() {return simplModel; }
+    ParticipantModel& getMembersList() { return members; }
+    ConversationModel& getConversationModel() { return convModel;}
+
+    ParticipantModel& getAllUsers() { return allUsers; }
+    ParticipantModel& getParticipants() { return curParticipants; }
 
 private slots:
     void onChatSelected(std::string item);
-
+    void onConnectionTimeout();
 signals:
     void authSuccess();
     void authError(QString message);
     void clientAuthorized(bool result);
     void changeSendButtonState();
+    void showLoginForm();
 //    void chatsListChanged();
     void getChatsUserBelongSuccess();
     void getChatsUserBelongError(QString message);
+    void clearMessageField();
     void showError(QString message);
+
+    void showBusyIndicator();
+    void hideBusyIndicator();
 private:
     void handleAuthenticationSuccess(Serialize::ChatMessage& msg);
     void handleAuthenticationError(Serialize::ChatMessage& msg);
@@ -100,13 +118,17 @@ private:
     commState state{commState::Disconnected};
     std::map<::google::protobuf::uint32, std::function<void(Serialize::ChatMessage&)> > handlers;
     std::unique_ptr<ServerCommunicator> serverCommunicator;
-    void getUsers(Serialize::UserInfoVector& elements);
+//    void getUsers(Serialize::UserInfoVector& elements);
 //    void selectCurrentUserInList();
+//    void saveAuthData();
+    void tryToLogin();
 
     bool authorized{false};
     StringListModel chats;
-    StringListModel participants;
-//    QStringListModel simplModel;
+    ParticipantModel members;
+    ConversationModel convModel;
+    ParticipantModel  allUsers;
+    ParticipantModel  curParticipants;
 
     std::optional<Database::userInfo> userSelected;
     std::map<std::string, std::set<std::string>> chatsInfo;
@@ -114,11 +136,7 @@ private:
 
     QString nickName;
     QString databaseName;
-/*
-    std::vector<std::string> getElements(const Serialize::StringVector& elements);
-    commState state{commState::Disconnected};
-    std::map<::google::protobuf::uint32, std::function<void(Serialize::ChatMessage&)> > handlers;
-    MainWindowInterface& interface;
-    std::unique_ptr<ServerCommunicator> serverCommunicator;
-*/
+    QString usrPassword;
+    bool loginScreenShown = false;
+    std::unique_ptr<QTimer> conTimer;
 };

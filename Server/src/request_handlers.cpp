@@ -14,6 +14,8 @@ void handleUserAuthorization(websocket_session& session, Serialize::ChatMessage&
   if(!msg.has_payload())
 	  return;
 
+  std::string result;
+try {
   Serialize::Login logmsg;
   msg.mutable_payload()->UnpackTo(&logmsg);
       		
@@ -24,7 +26,6 @@ void handleUserAuthorization(websocket_session& session, Serialize::ChatMessage&
  auto &dbInstance =  DatabaseDriver::instance();
 // auto result = dbInstance.findUserAuthInfo(const std::string& dbName, const std::string& collectionName, const std::string& userNick)
 
-  std::string result;
   if((usrlogin == admin.getLogin()) && (password == getHash(admin.getPassword())))
   {
 	result = serializeNoPayloadMessage(PayloadType::CLIENT_AUTHENTICATION_APPROVED);
@@ -42,6 +43,13 @@ void handleUserAuthorization(websocket_session& session, Serialize::ChatMessage&
   //ws_.binary(true);
   auto const ss = boost::make_shared<std::string const>(std::move(result));
   session.send(ss);
+}
+catch(std::exception& ex)
+{
+	result = serializeNoPayloadMessage(PayloadType::CLIENT_AUTHENTICATION_REJECTED, ex.what());
+	auto const ss = boost::make_shared<std::string const>(std::move(result));
+	session.send(ss);
+}
 }
 
 void handleGetDatabaseNames(websocket_session& session)
@@ -340,16 +348,44 @@ void handleGetChatsUserBelongsTo(websocket_session& session, Serialize::ChatMess
 	}
 }
 
-void handleAddMessageToDatabase(websocket_session& session, Serialize::ChatMessage& msg)
+bool userBelongsToChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& userNickname)
 {
+//	std::cout << "userBelongsToChat: " << dbName << chatCollectionName << userNickname << std::endl;
+	const std::string chatsListCollectionName{"chatrooms"};
+	auto &dbInstance =  DatabaseDriver::instance();
+	const auto& chatsArray = dbInstance.getAllChatsUserBelongsTo(dbName, chatsListCollectionName, userNickname);
+//	std::cout << "userBelongsTo Num Chats: " << chatsArray.chats.size() << std::endl;
+
+	for(const auto& chatInfo: chatsArray.chats)
+	{
+//		std::cout << "chatInfo.title:" << chatInfo.title << std::endl;
+		if(chatInfo.title != chatCollectionName)
+			continue;
+		else
+			return true;
+/*		{
+			auto itFind = std::find_if(chatInfo.participants.begin(), chatInfo.participants.end(),[&userNickname](const auto& member){
+				std::cout << "userBelongsToChat userNickname:" << userNickname << std::endl;
+				std::cout << "userBelongsToChat member:" << member << std::endl;
+				return userNickname == member;
+			});
+			return itFind != chatInfo.participants.end();
+		}*/
+	}
+	return false;
+}
+
+bool handleAddMessageToDatabase(websocket_session& session, Serialize::ChatMessage& msg)
+{
+    std::cout << std::endl << "handleAddMessageToDatabase" << std::endl;
 	if(!msg.has_payload())
-		return;
+		return false;
 
     Serialize::userChatMessage userChatMessage;
     msg.mutable_payload()->UnpackTo(&userChatMessage);
 
     if(!userChatMessage.has_message())
-    	return;
+    	return false;
 
     auto dbName = std::move(userChatMessage.dbname());
     auto chatTitle = std::move(userChatMessage.chattitle());
@@ -359,10 +395,12 @@ void handleAddMessageToDatabase(websocket_session& session, Serialize::ChatMessa
 
     const Serialize::userMessage& message = userChatMessage.message();
     if(!message.has_timestamp())
-    	return;
+    	return false;
 
     auto nickname = std::move(message.usernickname());
     auto mesg = std::move(message.usermessage());
+
+//    bool userBelongsToChat = userBelongsToChat(dbName, chatTitle, nickname);
 
 //	    int64_t ns = google::protobuf::util::TimeUtil::TimestampToNanoseconds(message.timestamp());
     std::chrono::milliseconds ms =
@@ -370,7 +408,12 @@ void handleAddMessageToDatabase(websocket_session& session, Serialize::ChatMessa
 
     auto &dbInstance =  DatabaseDriver::instance();
     bool res = dbInstance.addMessageToChat(dbName, chatTitle, nickname, ms, mesg);
+    if(res)
+    	std::cout << std::endl << "handleAddMessageToDatabase: success" << std::endl;
+    else
+    	std::cout << std::endl << "handleAddMessageToDatabase: failed" << std::endl;
 
+    return res;
 }
 
 void translateMessageToParticipants(websocket_session& session, Serialize::ChatMessage& msg)
@@ -393,31 +436,41 @@ void handleSendChatTapeToClient(websocket_session& session, Serialize::ChatMessa
     auto chatCollectionName = getTapeMessage.chattitle();
     auto userNickname = getTapeMessage.usernickname();
 
-    auto &dbInstance =  DatabaseDriver::instance();
-    const auto& chatsArray = dbInstance.getAllChatsUserBelongsTo(dbName, chatCollectionName, userNickname);
-
-    bool userBelongsToChat = false;
-    for(const auto& chatInfo: chatsArray.chats)
-    {
-    	if(chatInfo.title != chatCollectionName)
-    		continue;
-    	else
-    	{
-    		auto itFind = std::find_if(chatInfo.participants.begin(), chatInfo.participants.end(),[&userNickname](const auto& member){
-    			return userNickname == member;
-    		});
-    		userBelongsToChat = (itFind != chatInfo.participants.end());
-    	}
-    }
-    if(!userBelongsToChat)
+    bool userBelongsChat = userBelongsToChat(dbName, chatCollectionName, userNickname);
+    if(!userBelongsChat)
     {
 		std::string result = serializeNoPayloadMessage(PayloadType::SERVER_SEND_MESSAGE_TAPE_FROM_CHAT_ERROR, "User is not added to chat!");
     	auto const ss = boost::make_shared<std::string const>(std::move(result));
     	session.send(ss);
     	return;
     }
+    auto &dbInstance =  DatabaseDriver::instance();
+    std::cout << std::endl << "before dbInstance.getChatDocuments" << std::endl;
     const Database::chatMessagesTape& res =  dbInstance.getChatDocuments(dbName, chatCollectionName);
+    std::cout << std::endl << "before serializeChatMessagesTape" << std::endl;
     auto result = serializeChatMessagesTape(PayloadType::SERVER_SEND_MESSAGE_TAPE_FROM_CHAT, res);
     auto const ss = boost::make_shared<std::string const>(std::move(result));
     session.send(ss);
+}
+
+void handleAddMessageToChat(websocket_session& session, Serialize::ChatMessage& msg)
+{
+	const auto& packMessage = decodeChatMessage(msg);
+
+	bool userInChat = userBelongsToChat(packMessage.dbName, packMessage.chatTitle, packMessage.message.userNickName);
+	if(!userInChat)
+	{
+		std::string result = serializeNoPayloadMessage(PayloadType::CLIENT_SEND_MESSAGE_TO_CHAT_ERROR, "User is not added to chat!");
+		auto const ss = boost::make_shared<std::string const>(std::move(result));
+		session.send(ss);
+		return;
+	}
+	handleAddMessageToDatabase(session, msg);
+	translateMessageToParticipants(session, msg);
+}
+
+void handleDeleteAllMessagesFromChat(const std::string& dbName, const std::string& chatCollName)
+{
+	auto &dbInstance =  DatabaseDriver::instance();
+	dbInstance.deleteAllMessagesFromChat(dbName, chatCollName);
 }

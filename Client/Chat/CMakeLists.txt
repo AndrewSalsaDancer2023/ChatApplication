@@ -8,7 +8,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # QtCreator supports the following variables for Android, which are identical to qmake Android variables.
@@ -40,8 +40,14 @@ else()
       authenticationform.cpp
       stringlistmodel.h
       stringlistmodel.cpp
+      conversationmodel.h
+      conversationmodel.cpp
+      participantmodel.h
+      participantmodel.cpp
       coordinator.h
       coordinator.cpp
+      commonutils.h
+      commonutils.cpp
       ../../Server/build/authentication.pb.h
       ../../Server/build/authentication.pb.cc
       ../../Server/build/messages.pb.h

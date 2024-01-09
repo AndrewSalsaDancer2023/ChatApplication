@@ -56,3 +56,31 @@ Serialize::ConnectionData  getConnectionDataFromString(const std::string& json_s
 
     return data;
 }
+
+std::string serializeAuthDataToString(const std::string& login, const std::string& password,
+                                            const std::string& database)
+{
+    Serialize::Login logmsg;
+    logmsg.set_login(login);
+    logmsg.set_password(password);
+    logmsg.set_database(database);
+
+
+    google::protobuf::util::JsonPrintOptions options;
+    options.add_whitespace = true;
+    options.always_print_primitive_fields = true;
+    options.preserve_proto_field_names = true;
+    std::string json_string;
+    MessageToJsonString(logmsg, &json_string, options);
+
+    return json_string;
+}
+
+Serialize::Login getAuthDataFromString(const std::string& json_string)
+{
+    Serialize::Login data;
+    google::protobuf::util::JsonParseOptions options;
+    JsonStringToMessage(json_string, &data, options);
+
+    return data;
+}
