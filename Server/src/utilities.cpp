@@ -119,6 +119,25 @@ std::string serializeAllChatsUserBelongsToMessage(PayloadType type, const Databa
 	return output;
 }
 
+std::string serializeGetChatParticipantsMessage(PayloadType type, const Database::chatInfo& info)
+{
+	Serialize::chatInfo srlInfo;
+	srlInfo.set_title(info.title);
+
+	for(const auto& participant: info.participants)
+		srlInfo.add_participants(participant);
+
+	Serialize::ChatMessage msg;
+	msg.mutable_payload()->PackFrom(srlInfo);
+	msg.set_payload_type_id(static_cast<::google::protobuf::uint32>(type));
+
+	std::string output;
+	if(!msg.SerializeToString(&output))
+		return {};
+
+	return output;
+}
+
 std::string serializeChatMessagesTape(PayloadType type, const Database::chatMessagesTape& tape)
 {
 	Serialize::chatTape chatTape;

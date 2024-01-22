@@ -16,6 +16,7 @@ void handleModifyUser(websocket_session& session, Serialize::ChatMessage& msg);
 void handleCreateChat(websocket_session& session, Serialize::ChatMessage& msg);
 void handleAddUserToChat(websocket_session& session, Serialize::ChatMessage& msg);
 void handleDeleteUserFromChat(websocket_session& session, Serialize::ChatMessage& msg);
+void handleModifyChatUsersList(websocket_session& session, Serialize::ChatMessage& msg);
 void handleGetChatsUserBelongsTo(websocket_session& session, Serialize::ChatMessage& msg);
 bool handleAddMessageToDatabase(websocket_session& session, Serialize::ChatMessage& msg);
 void translateMessageToParticipants(websocket_session& session, Serialize::ChatMessage& msg);

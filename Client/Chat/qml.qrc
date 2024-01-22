@@ -17,5 +17,6 @@
         <file>ParticipantListItem.qml</file>
         <file>BusyIndicator.qml</file>
         <file>uiutilities.js</file>
+        <file>ParticipantList.qml</file>
     </qresource>
 </RCC>

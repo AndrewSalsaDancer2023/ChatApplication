@@ -10,6 +10,7 @@
 #include <mongocxx/instance.hpp>
 #include <mongocxx/stdx.hpp>
 #include <mongocxx/uri.hpp>
+#include <mongocxx/pool.hpp>
 #include <mongocxx/exception/bulk_write_exception.hpp>
 #include <mongocxx/exception/query_exception.hpp>
 #include <mongocxx/exception/operation_exception.hpp>
@@ -26,6 +27,11 @@ inline std::string bsonArrayElementToString(const bsoncxx::array::element& eleme
 inline bool bsonElementToBoolean(const bsoncxx::document::element& element);
 inline int64_t bsonElementToTimePoint(const bsoncxx::document::element& element);
 std::vector<Database::userInfo> getAllUsers(const mongocxx::database& db, const std::string& usersCollectionName);
+Database::chatInfo getChatParticipants(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& chatTitle);
+bool deleteUsersFromChat(const mongocxx::database& db, const std::string& chatCollectionName,
+						 const std::string& chatTitle, const std::set<std::string>& deletedUsersNickNames);
+bool addUsersToChat(const mongocxx::database& db, const std::string& chatCollectionName,
+						 const std::string& chatTitle, const std::set<std::string>& addedUsersNickNames);
 bool addUserToChat(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& chatTitle, const std::string& userNickName);
 bool removeUserFromChat(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& chatTitle, const std::string& userNickName);
 Database::chatInfoArray getAllChatsUserBelongsTo(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& userNickName);
@@ -57,30 +63,35 @@ class DatabaseDriver {
     
     std::vector<std::string> getDatabasesNames()
     {
-	return ::getDatabasesNames(client);
+    	auto client = pool.acquire();
+    	return ::getDatabasesNames(*client);
     }
     
     std::vector<std::string> getCollectionsNames(const std::string& dbName)
     {    
-        auto db = client[dbName];
+    	auto client = pool.acquire();
+        auto db = (*client)[dbName];
         return ::getCollectionsNames(db);
     }
 
     std::vector<Database::userInfo> getAllUsers(const std::string& dbName, const std::string& collectionName)
     {
-    	auto db = client[dbName];
+    	auto client = pool.acquire();
+    	auto db = (*client)[dbName];
     	return ::getAllUsers(db, collectionName);
     }
 
     std::optional<Database::userAuthInfo> findUserAuthInfo(const std::string& dbName, const std::string& collectionName, const std::string& userNick)
     {
-    	auto db = client[dbName];
+    	auto client = pool.acquire();
+    	auto db = (*client)[dbName];
     	return ::findUserAuthInfo(db, collectionName, userNick);
     }
 
     bool addUserToDatabase(const std::string& dbName, const std::string& collectionName, const Database::userInfo& info)
     {
-    	auto db = client[dbName];
+    	auto client = pool.acquire();
+    	auto db = (*client)[dbName];
     	if(::isUserAddedToDatabase(db, collectionName, info.nickname))
     		return true;
 
@@ -93,7 +104,8 @@ class DatabaseDriver {
 
     bool markUserAsDeletedFromDatabase(const std::string& dbName, const std::string& collectionName, const std::string& userNickname)
         {
-        	auto db = client[dbName];
+    		auto client = pool.acquire();
+        	auto db = (*client)[dbName];
         	if(::isUserAddedToDatabase(db, collectionName, userNickname))
         		return false;
 
@@ -102,7 +114,8 @@ class DatabaseDriver {
 
     bool deleteUserFromDatabase(const std::string& dbName, const std::string& collectionName, const std::string& userNickname)
     {
-    	auto db = client[dbName];
+    	auto client = pool.acquire();
+    	auto db = (*client)[dbName];
     	if(::isUserAddedToDatabase(db, collectionName, userNickname))
     		return false;
 
@@ -111,55 +124,88 @@ class DatabaseDriver {
 
     bool modifyUserInfo(const std::string& dbName, const std::string& collectionName, const Database::userInfo& info)
     {
-    	auto db = client[dbName];
+    	auto client = pool.acquire();
+    	auto db = (*client)[dbName];
     	return ::modifyUserInfo(db, collectionName, info);
     }
 
     bool createChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& chatTitle, const std::set<std::string>& participants)
     {
-    	auto db = client[dbName];
+    	auto client = pool.acquire();
+    	auto db = (*client)[dbName];
     	return ::createChat(db, chatCollectionName, chatTitle, participants);
     }
 
     bool addUserToChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& chatTitle, const std::string& userNickName)
     {
-    	auto db = client[dbName];
+    	auto client = pool.acquire();
+    	auto db = (*client)[dbName];
     	return ::addUserToChat(db, chatCollectionName, chatTitle, userNickName);
     }
 
     bool removeUserFromChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& chatTitle, const std::string& userNickName)
     {
-    	auto db = client[dbName];
+    	auto client = pool.acquire();
+    	auto db = (*client)[dbName];
     	return ::removeUserFromChat(db, chatCollectionName, chatTitle, userNickName);
     }
 
     Database::chatInfoArray getAllChatsUserBelongsTo(const std::string& dbName, const std::string& chatCollectionName, const std::string& userNickName)
 	{
-    	auto db = client[dbName];
+    	auto client = pool.acquire();
+    	auto db = (*client)[dbName];
     	return ::getAllChatsUserBelongsTo(db, chatCollectionName, userNickName);
 	}
 
     bool addMessageToChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName, const std::chrono::milliseconds& tstamp, const std::string& message)
     {
-    	auto db = client[dbName];
+    	auto client = pool.acquire();
+    	auto db = (*client)[dbName];
     	return ::addMessageToChat(db, chatCollectionName, nickName, tstamp, message);
     }
 
     Database::chatMessagesTape getChatDocuments(const std::string& dbName, const std::string& chatCollectionName)
     {
-    	auto db = client[dbName];
+    	auto client = pool.acquire();
+    	auto db = (*client)[dbName];
     	return ::getChatDocuments(db, dbName, chatCollectionName);
     }
 
     bool deleteAllMessagesFromChat(const std::string& dbName, const std::string& chatCollectionName)
     {
-    	auto db = client[dbName];
+    	auto client = pool.acquire();
+    	auto db = (*client)[dbName];
     	return ::deleteAllMessagesFromChat(db, chatCollectionName);
     }
 
+    bool addUsersToChat(const std::string& dbName, const std::string& chatCollectionName,
+    						 const std::string& chatTitle, const std::set<std::string>& addedUsersNickNames)
+    {
+    	auto client = pool.acquire();
+    	auto db = (*client)[dbName];
+    	return ::addUsersToChat(db, chatCollectionName, chatTitle, addedUsersNickNames);
+    }
+
+    bool deleteUsersFromChat(const std::string& dbName, const std::string& chatCollectionName,
+    						 const std::string& chatTitle, const std::set<std::string>& deletedUsersNickNames)
+    {
+    	auto client = pool.acquire();
+    	auto db = (*client)[dbName];
+    	return ::deleteUsersFromChat(db, chatCollectionName, chatTitle, deletedUsersNickNames);
+    }
+
+    Database::chatInfo getChatParticipants(const std::string& dbName, const std::string& chatCollectionName, const std::string& chatTitle)
+    {
+    	auto client = pool.acquire();
+    	auto db = (*client)[dbName];
+    	return ::getChatParticipants(db, chatCollectionName, chatTitle);
+    }
+
+
     private:
      mongocxx::instance mongoInstance{};
-     mongocxx::client client{mongocxx::uri{}};
+//     mongocxx::client client{mongocxx::uri{}};
+     mongocxx::pool pool{mongocxx::uri{"mongodb://localhost:27017/?minPoolSize=3&maxPoolSize=10"}};
 
     DatabaseDriver()
     {

@@ -136,7 +136,7 @@ try{
     	handleCreateChat(*this, msg);
     }
     else
-    if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_ADD_USER_TO_CHAT) == msg.payload_type_id())
+/*    if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_ADD_USER_TO_CHAT) == msg.payload_type_id())
     {
     	handleAddUserToChat(*this, msg);
     }
@@ -144,6 +144,10 @@ try{
     if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_DELETE_USER_FROM_CHAT) == msg.payload_type_id())
     {
     	handleDeleteUserFromChat(*this, msg);
+    }*/
+    if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_MODIFY_CHAT_USERS_LIST) == msg.payload_type_id())
+    {
+    	handleModifyChatUsersList(*this, msg);
     }
     else
         if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_GET_CHATS_USER_BELONGS_TO) == msg.payload_type_id())

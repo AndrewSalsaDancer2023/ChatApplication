@@ -1,8 +1,10 @@
 import QtQuick 2.0
 import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.0
+import "qrc:/uiutilities.js" as Utils
 
 SplitView {
+     id: mainChatWindow
      anchors.fill: parent
      orientation: Qt.Horizontal
 
@@ -27,7 +29,7 @@ SplitView {
         }
 
         onChangeSendButtonState:{
-            changeSendButtonState()
+            changeSendButtonState(chatsList.notEmpty(), channelMessage.text.length)
         }
 
         onGetChatsUserBelongError:{
@@ -40,12 +42,13 @@ SplitView {
         }
     }
 
-    function changeSendButtonState()
+    function changeSendButtonState(chatsListNotEmpty, chatMsgSize)
     {
-        if(chatsList.notEmpty() === true)
-            sendButton.enabled = true
-        else
-             sendButton.enabled = false
+        if((chatsListNotEmpty === true) &&
+                (chatMsgSize >= Utils.minChatMsgLength) && (chatMsgSize <= Utils.maxChatMsgLength))
+                sendButton.enabled = true
+            else
+                 sendButton.enabled = false
     }
 
     property var messageWindow: null
@@ -67,29 +70,6 @@ SplitView {
             messageWindow = null
         }
     }
-/*
-    property var busyIndicator: null
-
-    function createBusyIndicator()
-    {
-        if(busyIndicator == null) {
-            var component = Qt.createComponent("BusyIndicator.qml")
-            busyIndicator = component.createObject(chatPart, {"x" : 0, "y" : 0})
-            if(busyIndicator !== null) {
-                busyIndicator.anchors.centerIn = chatPart
-            }
-        }
-    }
-
-    function destroyBusyIndocator() {
-        if(busyIndicator !== null) {
-            busyIndicator.destroy()
-            busyIndicator = null
-        }
-    }
-
-*/
-
 
      Rectangle {
          width: parent.width / 3
@@ -100,27 +80,12 @@ SplitView {
             id: mainMenu
             anchors.fill: parent
             spacing: 4
-/*            Text {
-                font.pixelSize: 20
-                color: "#F69678"
-                text: "Settings"
-              }
-             Button {
-                 id: profileButton
-                 width: parent.width
-                 text: "Login"
-                 onClicked:  {
-                     destroyBusyIndocator()
-                 }
-             }
-//                     console.log("Create channel")
-                     createBusyIndicator()
-*/
              Button {
                  id: channelsButton
                  width: parent.width
                  text: "Create channel"
                  onClicked: {
+                     Coordinator.prepareMembersList()
                      stackView.push("qrc:/AddChannelForm.qml")
                  }
              }
@@ -158,13 +123,9 @@ SplitView {
      }
      Rectangle {
          id: chatPart
-         Layout.minimumWidth: 50
+//         Layout.minimumWidth: 50
          Layout.fillWidth: true
          color: "lightgray"
-
-         Column {
-            anchors.fill: parent
-            spacing: 4
             Rectangle {
                 id: chatInfoBlock
                 width: parent.width
@@ -172,40 +133,21 @@ SplitView {
                 border.color: "black"
                 height: 50
                 z: 5
-                color: "lightgrey"
-
+//                color: "lightgrey"
+                color: "lightblue"
                 Column {
-                    anchors.fill: parent
-                    spacing: 10
-                    Row {
-                        spacing: 14
+                    width: parent.width
+                    id: infoColumn
+                    spacing: 5
+                    Text {
                         width: parent.width
-/*                        Text {
-                            id: channelTitle
-                            text: "channel"
-                          }*/
-                         Text {
-                            id: participants
-//                            font.pixelSize: 20
-                            text: "participants:"
-                          }
+                        id: participants
+                        text: "participants:"
                     }
-/*                    ListView {
-                        id: partList
-                        width: parent.width
-                        height: 20
-                        orientation: ListView.Horizontal
-                        layoutDirection: Qt.LeftToRight
-                        spacing: 5
-                        model: participantsList
-                        ParticipantListItem {
-                            id: participantsDelegate
-                        }
-                        delegate: participantsDelegate
-                    }*/
                     ListView {
                         width: parent.width
                         height: 20
+//                        height: chatInfoBlock - participants.height - infoColumn.spacing
                         orientation: ListView.Horizontal
                         layoutDirection: Qt.LeftToRight
                         spacing: 5
@@ -215,26 +157,14 @@ SplitView {
                         }
                         delegate: participantsDelegate
                     }
-  /*                  Row {
-                        width: parent.width
-                        Rectangle {
-                            width: parent.width
-                            height: findText.height + 10
-                            radius: 5
-                            border.color: "black"
-                            Text {
-                                  id:findText
-                                  text: "find in this channel..."
-                              }
-                        }
-                        }*/
-                    }
+                }
             }
+
             ListView {
                 id: conversationList
                 width: parent.width
+                anchors.top : chatInfoBlock.bottom
                 height: parent.height - chatInfoBlock.height - messageBlock.height
-//                 anchors.fill: parent
                 spacing: 5
                  model: conversation
                  ConversationItem {
@@ -245,43 +175,73 @@ SplitView {
             Rectangle {
                 id: messageBlock
                 width: parent.width
-//                anchors.fill.width: parent.width
                 border.color: "black"
+                color: "lightblue"
+                height: 80
                 radius: 5
-                height: 70
                 z: 5
-                color: "lightgrey"
+//                color: "lightgrey"
                 anchors {
                    left: chatPart.left
                     right: chatPart.right
                     bottom: chatPart.bottom
-                    bottomMargin: 5
                 }
+               Column {
+                   Row {
+                       id: infoRow
+//                       anchors.fill.width: parent.width
+                       spacing: 5
+                    Text {
+                         text: "Message limits:"
+                       }
+                    Text {
+                         text: {
+                             return "min:" + Utils.minChatMsgLength.toString()
+                         }
+                       }
+                    Text {
+                         text: {
+                             return "max:" + Utils.maxChatMsgLength.toString()
+                         }
+                       }
+                    Text {
+                         text: {
+                             return "current:" + channelMessage.text.length.toString()
+                         }
+                       }
+                   }
                 Row {
                     id: messageRow
-//                    spacing: 4
-                    anchors.fill: parent
+                    spacing: 4
+//                    anchors.fill.width: parent.width
+                    anchors {
+                       left: messageBlock.left
+                        right: messageBlock.right
+//                        top: messageBlock.top
+                        bottom: messageBlock.bottom
+                    }
+
                     TextArea {
                         id: channelMessage
-                        width: messageRow.width - sendButton.width - 3
-                        anchors {
-                            top: messageRow.top
-                            bottom: messageRow.bottom
-                            topMargin: 5
-                            bottomMargin: 10
+                        height: messageBlock.height - infoRow.height - 3
+//                        anchors.bottom: messageBlock.bottom
+                        text: "Sample message"
+                        width: messageBlock.width - sendButton.width - 2*messageRow.spacing
+                        onTextChanged: {
+                            console.log("Text has changed to:", text)
+                            changeSendButtonState(chatsList.notEmpty(), channelMessage.text.length)
                         }
-//                        placeholderText: qsTr("Enter description")
-//                        text: "message to channel"
                     }
                     Button {
                         id:sendButton
                         enabled: false
-                        anchors {
+/*                        anchors {
                            top: messageRow.top
                            right: messageRow.right
                            rightMargin: 3
                            topMargin: 5
                         }
+*/
                         text: "Send";
                         onClicked: {
                             sendMessage()
@@ -289,14 +249,6 @@ SplitView {
                     }
                 }
             }
+           }
          }
-     }
-/*       Rectangle {
-         width: 200
-         color: "lightgreen"
-         Text {
-             text: "View 3"
-             anchors.centerIn: parent
-         }
-     }*/
  }

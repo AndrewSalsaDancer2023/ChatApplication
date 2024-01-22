@@ -41,6 +41,8 @@ void f(T v)
 //https://www.youtube.com/playlist?list=PLS0ecZsqDIUyAWsk63m8lB6o6-udJD724
 
 //https://techoverflow.net/2023/07/31/how-to-convert-stdchronotime_point-to-seconds-since-epoch/
+//https://qna.habr.com/q/1007635
+
 int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);

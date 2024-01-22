@@ -50,11 +50,7 @@ Rectangle {
 
     Connections {
         target: Coordinator
-/*        onAuthSuccess: {
-           stackView.pop()
-           stackView.push("qrc:/ChatView.qml")
-        }
-*/
+
         onAuthError: {
             Utils.createMessageWindow(authForm, message)
         }

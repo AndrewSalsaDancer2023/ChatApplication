@@ -6,6 +6,7 @@
 
 #include <bsoncxx/builder/stream/document.hpp>
 #include <bsoncxx/builder/stream/array.hpp>
+#include <bsoncxx/builder/core.hpp>
 
 using namespace bsoncxx;
 using bsoncxx::builder::basic::kvp;
@@ -107,6 +108,54 @@ std::vector<Database::userInfo> getAllUsers(const mongocxx::database& db, const 
     return result;
 }
 
+bool addUsersToChat(const mongocxx::database& db, const std::string& chatCollectionName,
+						 const std::string& chatTitle, const std::set<std::string>& addedUsersNickNames)
+{
+	if(!hasCollection(db, chatCollectionName))
+	        return false;
+
+    auto collection = db[chatCollectionName];
+
+    auto searchDocument = make_document(kvp("title", chatTitle));
+
+    for(const auto& addedUser : addedUsersNickNames)
+    {
+        auto updateDocument =   make_document(kvp("$addToSet", make_document(kvp("participants", addedUser))));
+        auto result = collection.update_one(searchDocument.view(), updateDocument.view());
+
+        if((!result) || ((*result).result().modified_count() != 1))
+            return false;
+    }
+
+    return true;
+}
+
+bool deleteUsersFromChat(const mongocxx::database& db, const std::string& chatCollectionName,
+						 const std::string& chatTitle, const std::set<std::string>& deletedUsersNickNames)
+{
+	if(!hasCollection(db, chatCollectionName))
+	        return false;
+
+    auto collection = db[chatCollectionName];
+
+	auto array_builder = bsoncxx::builder::basic::array{};
+
+	for (auto& deletedUser : deletedUsersNickNames)
+	    array_builder.append(deletedUser);
+
+	auto deletData = make_document(kvp("$in", array_builder));
+	auto deletCond = make_document(kvp("participants", deletData));
+	auto pullCond = make_document(kvp("$pull", deletCond));
+
+	auto searchDocument = make_document(kvp("title", chatTitle));
+	auto result = collection.update_one(searchDocument.view(), pullCond.view());
+
+	if(!result)
+		return false;
+
+	return (*result).result().modified_count() == 1;
+}
+
 bool addUserToChat(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& chatTitle, const std::string& userNickName)
 {
     if(!hasCollection(db, chatCollectionName))
@@ -139,6 +188,35 @@ bool removeUserFromChat(const mongocxx::database& db, const std::string& chatCol
     return (*result).result().modified_count() == 1;
 }
 
+Database::chatInfo getChatParticipants(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& chatTitle)
+{
+	Database::chatInfo result;
+
+	if(!hasCollection(db, chatCollectionName))
+	       return result;
+
+	auto collection = db[chatCollectionName];
+	auto searchCriteria = make_document(kvp("title", chatTitle));
+	auto val = collection.find_one(searchCriteria.view());
+	if(!val)
+		return result;
+
+	auto participants = (*val)["participants"];
+	if (participants.type() != type::k_array)
+		return result;
+
+    bsoncxx::array::view partview{participants.get_array().value};
+    for (const bsoncxx::array::element& msg : partview)
+    {
+    	if (msg.type() != type::k_string)
+    		continue;
+
+    	result.participants.push_back(bsonArrayElementToString(msg));
+    }
+
+    result.title = chatTitle;
+	return result;
+}
 
 Database::chatInfoArray getAllChatsUserBelongsTo(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& userNickName)
 {
@@ -170,7 +248,6 @@ Database::chatInfoArray getAllChatsUserBelongsTo(const mongocxx::database& db, c
 
 	   chat.title = bsonElementToString(doc["title"]);
 	   result.chats.push_back(chat);
-//	   result.push_back(bsonElementToString(doc["title"]));
    }
     return result;
 }
@@ -219,14 +296,6 @@ Database::chatMessagesTape getChatDocuments(const mongocxx::database& db, const 
 
 bsoncxx::document::value createChatDescriptionDocument(const std::string& chatTitle, const std::set<std::string>& users)
 {
-/*
-    auto doc_value = make_document();
-
-    auto arrayDoc = doc_value << "$each" << bsoncxx::builder::core::open_array
-    for (auto& user : users)
-            arrayDoc << user;
-        arrayDoc << bsoncxx::builder::core::close_array;
-  */
     bsoncxx::builder::basic::document update_builder;
     bsoncxx::builder::basic::array participants_array;
     for (const auto& user : users)
@@ -386,7 +455,7 @@ bool modifyUserInfo(const mongocxx::database& db, const std::string& collectionN
                       << "password" << info.password
                       << "photo" << info.profilepicture
                       << "deleted" << info.deleted
-              << bsoncxx::builder::stream::finalize;
+					  << bsoncxx::builder::stream::finalize;
 
 //    std::cout << bsoncxx::to_json(updateInfo, bsoncxx::ExtendedJsonMode::k_relaxed) << std::endl;
 
@@ -408,12 +477,7 @@ bool createChat(const mongocxx::database& db, const std::string& chatCollectionN
 
 	 if(isChatAddedToDatabase(db, chatCollectionName, chatTitle))
 		 return false;
-/*
-	 std::set<std::string> users;
 
-	 for(const auto& user: info.participants)
-		 users.insert(user);
-*/
 	 auto newChat = createChatDescriptionDocument(chatTitle, participants);
 	 if(!addDocumentToCollection(db, chatCollectionName, newChat))
 		 return false;

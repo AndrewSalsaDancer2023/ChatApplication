@@ -2,12 +2,22 @@ import QtQuick.Controls 1.5
 import QtQuick.Controls.Styles 1.4
 import QtQuick 2.12
 import Authentication 1.0
+import "qrc:/uiutilities.js" as Utils
 
 Rectangle {
-    id: addPartForm
+    id: addParticipantsForm
     anchors.fill: parent
     color: "grey"
-    property var buttonText
+//    property var buttonText
+
+    Connections {
+        target: Coordinator
+
+        onShowError:{
+             Utils.createMessageWindow(addParticipantsForm, message)
+        }
+    }
+
     Column {
          anchors.centerIn: parent
          width: parent.width * .8
@@ -19,7 +29,10 @@ Rectangle {
             text: "Participants adding"
             anchors.horizontalCenter: parent.horizontalCenter
     }
-    Grid {
+    ParticipantList {
+        id: partList
+    }
+ /*   Grid {
         id: userLists
         rows: 2
         columns: 2
@@ -60,27 +73,26 @@ Rectangle {
             }
             delegate: memberDelegate
          }
-    }
+    }*/
     Row {
         anchors.horizontalCenter: parent.horizontalCenter
-//        anchors.top: userLists.bottom
-//        anchors.topMargin: 10
         spacing: 10
-
         Button {
-//            anchors.horizontalCenter: parent.horizontalCenter
             text: "Ok"
             onClicked: {
                 if(Coordinator.hasCorrectChatParticipants() === true)
                 {
-                    console.log("submit")
+                    Coordinator.modifyChatParticipants(chatsList.getItem(chatList.currentItem))
                     stackView.pop()
+                }
+                else
+                {
+                    Utils.createMessageWindow(addParticipantsForm, Utils.notEnoughParticipants)
                 }
             }
         }
 
         Button {
-//            anchors.horizontalCenter: parent.horizontalCenter
             text: "Cancel"
             onClicked: {
                 console.log("cancel")
@@ -88,16 +100,6 @@ Rectangle {
             }
         }
     }
-
-
-/*    Row {
-        anchors.horizontalCenter: parent.horizontalCenter
-//        anchors.top: userLists.bottom
-//        anchors.topMargin: 10
-        spacing: 15
-             Button { text: "Ok"; onClicked: console.log("submit") }
-             Button { text: "Cancel"; onClicked: console.log("cancellation") }
-   }*/
 }
 }
 

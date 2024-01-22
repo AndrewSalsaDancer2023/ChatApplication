@@ -6,6 +6,7 @@ enum class PayloadType : unsigned int;
 
 namespace Database {
  struct userInfo;
+ struct chatInfo;
  struct chatInfoArray;
  struct chatMessagesTape;
 }
@@ -62,3 +63,4 @@ std::string serializeGetUsersMessage(PayloadType type, const std::vector<Databas
 std::string serializeAllChatsUserBelongsToMessage(PayloadType type, const Database::chatInfoArray& chatsList);
 std::string serializeChatMessagesTape(PayloadType type, const Database::chatMessagesTape& tape);
 std::string serializeChatMessage(PayloadType type, Serialize::ChatMessage& msg);
+std::string serializeGetChatParticipantsMessage(PayloadType type, const Database::chatInfo& info);

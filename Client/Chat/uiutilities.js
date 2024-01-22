@@ -24,6 +24,17 @@ function destroyBusyIndocator() {
 function helloFunc() {
     console.log("Hello from javascript!!!")
 }
+var minChatMsgLength = 2
+var maxChatMsgLength = 200
+
+var minChatTitleLength = 8
+var minChatDescrLength = 20
+
+var notEnoughParticipants = "minimum two participants should be added"
+var tooShortChatTitle = "Short chat title. Should be min 8 symbols"
+var tooShortChatDescr = "Short chat description. Should be min 20 symbols"
+
+var examplShortChatDescr = String.format('{0} is dead, but {1} is alive! {0} {2}', 'ASP', 'ASP.NET');
 
 var indicatorShown = false
 

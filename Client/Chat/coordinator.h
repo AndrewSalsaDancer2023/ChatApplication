@@ -53,17 +53,20 @@ public:
     void sendGetChatsContainUserMessage(const QString& dbName, const QString& collName, const QString& nickName);
     void sendAddUserToChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const QString& nickName);
     void sendDeleteUserFromChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const QString& nickName);
-    void sendCreateChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const std::vector<QString>& participants);
+    void sendCreateChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const std::set<std::string>& participants);
 
     Q_INVOKABLE void setAuthenticationData(QString login, QString password, QString dbName);
     Q_INVOKABLE void mainWindowLoaded();
     Q_INVOKABLE void sendChatMessage(const QString& channel, const QString& text);
     Q_INVOKABLE void setLoginScreenShown(bool shown) { loginScreenShown = shown; }
     Q_INVOKABLE void prepareUsersLists(int index);
+    Q_INVOKABLE void prepareMembersList();
 
+    Q_INVOKABLE bool hasCorrectChatParticipants();
+    Q_INVOKABLE void modifyChatParticipants(const QString& chat);
     Q_INVOKABLE void removeParticipant(const QString& nickName);
     Q_INVOKABLE void addParticipant(const QString& nickName);
-    Q_INVOKABLE bool hasCorrectChatParticipants();
+    Q_INVOKABLE void createChat(const QString& chatTitle, const QString& description);
 
     void getChatTape(const QString& channel);
     void getChatTapes();
@@ -77,6 +80,9 @@ public:
     ParticipantModel& getAllUsers() { return allUsers; }
     ParticipantModel& getParticipants() { return curParticipants; }
 
+//    void addNewParticipants(std::set<std::string>& nickNames);
+//    void removeParticipants(std::set<std::string>& nickNames);
+
 private slots:
     void onChatSelected(std::string item);
     void onConnectionTimeout();
@@ -86,6 +92,7 @@ signals:
     void clientAuthorized(bool result);
     void changeSendButtonState();
     void showLoginForm();
+
 //    void chatsListChanged();
     void getChatsUserBelongSuccess();
     void getChatsUserBelongError(QString message);
@@ -98,10 +105,6 @@ private:
     void handleAuthenticationSuccess(Serialize::ChatMessage& msg);
     void handleAuthenticationError(Serialize::ChatMessage& msg);
 
-    void handleAddUserToChatSuccess(Serialize::ChatMessage& msg);
-    void handleAddUserToChatError(Serialize::ChatMessage& msg);
-    void handledDeleteUserFromChatSuccess(Serialize::ChatMessage& msg);
-    void handledDeleteUserFromChatError(Serialize::ChatMessage& msg);
     void handleCreateChatMessageSuccess(Serialize::ChatMessage& msg);
     void handleCreateChatMessageError(Serialize::ChatMessage& msg);
 
@@ -115,13 +118,17 @@ private:
     void handleGetMessageTapeFromChat(Serialize::ChatMessage& msg);
     void handleGetMessageTapeFromChatError(Serialize::ChatMessage& msg);
 
+    void handleDeleteUsersFromChatError(Serialize::ChatMessage& msg);
+    void handleAddUsersFromChatError(Serialize::ChatMessage& msg);
+    void handleModifyChatUsersSuccess(Serialize::ChatMessage& msg);
+    void handleUpdateChatParticipants(Serialize::ChatMessage& msg);
+
     commState state{commState::Disconnected};
     std::map<::google::protobuf::uint32, std::function<void(Serialize::ChatMessage&)> > handlers;
     std::unique_ptr<ServerCommunicator> serverCommunicator;
-//    void getUsers(Serialize::UserInfoVector& elements);
-//    void selectCurrentUserInList();
-//    void saveAuthData();
+
     void tryToLogin();
+    std::set<std::string> getNickNames(ParticipantModel& model);
 
     bool authorized{false};
     StringListModel chats;

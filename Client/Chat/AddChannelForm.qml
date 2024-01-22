@@ -5,9 +5,11 @@ import Authentication 1.0
 
 Rectangle {
     anchors.fill: parent
+    anchors.centerIn: parent
     color: "grey"
     Column {
          anchors.centerIn: parent
+         anchors.fill: parent
          spacing: 10
     Text {
             font.pixelSize: 32
@@ -15,12 +17,10 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
     }
     Grid {
-//    anchors.centerIn: parent
+    anchors.horizontalCenter: parent.horizontalCenter
     rows: 2
     columns: 2
     spacing: 10
-//    Row {
-//        spacing: 15
         Text {
                 font.pixelSize: 20
                 text: "title"
@@ -30,20 +30,26 @@ Rectangle {
             width: 200
             placeholderText: "new channel"
         }
-//    }
-//    Row {
-//        spacing: 15
+/*
         Text {
                 font.pixelSize: 20
                 text: "description"
         }
         TextArea {
             id: channelDescription
-//            placeholderText: "channel is about..."
             width: 200
             height: 50
         }
-//     }
+*/
+    }
+    Rectangle {
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: parent.width * 0.8
+        height: parent.height / 2
+        color: "lightgrey"
+        ParticipantList {
+            id: partList10
+        }
     }
     Row {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -51,15 +57,35 @@ Rectangle {
                  Button {
                      text: "Create";
                      onClicked: {
-                         console.log("submit")
-                         stackView.pop()
+                         if(channelTitle.text.length < Utils.minChatTitleLength)
+                         {
+                            Utils.createMessageWindow(addParticipantsForm, Utils.tooShortChatTitle)
+                             return
+                         }
+/*
+                         if(channelDescription.text.length < Utils.minChatDescrLength)
+                         {
+                             Utils.createMessageWindow(addParticipantsForm, Utils.tooShortChatDescr)
+                              return
+                         }
+*/
+                         if(Coordinator.hasCorrectChatParticipants() === true)
+                         {
+                             Coordinator.createChat(channelTitle, channelDescription)
+                             stackView.pop()
+                         }
+                         else
+                         {
+                             Utils.createMessageWindow(addParticipantsForm, Utils.notEnoughParticipants)
+                         }
                      }
                  }
                  Button {
                      text: "Cancel";
                      onClicked: {
                          console.log("cancellation")
-                         stackView.pop()                     }
+                         stackView.pop()
+                     }
                  }
        }
     }
