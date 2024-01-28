@@ -40,6 +40,11 @@ SplitView {
             console.log("onClearMessageField")
             clearMessageField()
         }
+
+        onScrollListToTheEnd : {
+            console.log("onScrollListToTheEnd")
+            conversationList.positionViewAtEnd()
+        }
     }
 
     function changeSendButtonState(chatsListNotEmpty, chatMsgSize)
@@ -171,6 +176,23 @@ SplitView {
                      id: conversationDelegate
                  }
                  delegate: conversationDelegate
+/*
+                 onMovementEnded: {
+                     console.log("movement ended")
+                 }
+
+                 onAtYEndChanged: {
+                     console.log("scrolled")
+                     var descr = 'current index: ' + conversationList.currentIndex.toString();
+                     console.log(descr)
+                     if(conversationList.atYBeginning) {
+                           console.log("scrolled to begin")
+                     }
+                     if (conversationList.atYEnd) {
+                       console.log("scrolled to end")
+                     }
+                   }
+                 */
              }
             Rectangle {
                 id: messageBlock

@@ -47,13 +47,7 @@ void ServerCommunicator::onConnected()
  void ServerCommunicator::sendGetDBCollectionNamesRequest(const std::string& dbName)
  {
      std::string res = createNoPayloadMessage(PayloadType::SERVER_GET_DB_COLLECTIONSNAMES, dbName);
-/*     if(res.empty())
-     {
-         QString message = "Unable to encode message SERVER_GET_DB_NAMES";
-         showMessage(message);
-         return;
-     }
-*/
+
      m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
  }
 
@@ -111,7 +105,7 @@ void ServerCommunicator::sendDeleteUserFromChatMessage(const std::string& dbName
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
 }
 
-void ServerCommunicator::sendCreateChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::vector<std::string>& participants)
+void ServerCommunicator::sendCreateChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::set<std::string>& participants)
 {
     std::string res = createChatMessage(dbName, collName, chatTitle, participants);
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
@@ -126,5 +120,11 @@ void ServerCommunicator::sendMessageToChat(const std::string& dbName, const std:
 void ServerCommunicator::sendGetMessageTapeFromChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName)
 {
     std::string res = createGetChatTapeMessage(dbName, chatCollectionName, nickName);
+    m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
+}
+
+void ServerCommunicator::sendModifyChatParticipantsMessage(const std::string& dbName, const std::string&  collName, const std::string&  chatTitle, std::set<std::string>& delUsrs, std::set<std::string>& addUsrs)
+{
+    std::string res = createModifyChatParticipantsMessage(dbName, collName, chatTitle, delUsrs, addUsrs);
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
 }

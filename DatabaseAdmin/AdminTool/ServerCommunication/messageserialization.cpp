@@ -7,6 +7,7 @@
 #include "../../Server/src/common_types.h"
 #include "../../Server/src/security.h"
 #include "../../Server/src/database/DatabaseTypes.h"
+#include "../../Client/Chat/commonutils.h"
 #include <google/protobuf/util/time_util.h>
 
 std::string createAuthorizationMessage(const std::string& login, const std::string& password, const std::string& dbName)
@@ -234,7 +235,7 @@ std::string createDeleteUserFromChatMessage(const std::string& dbName, const std
     return {};
 }
 
-std::string createChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::vector<std::string>& participants)
+std::string createChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::set<std::string>& participants)
 {
     Serialize::CreateChatInfo createChatRequest;
     createChatRequest.set_dbname(dbName);
@@ -385,7 +386,6 @@ Database::chatMessagesTape decodeMessageTapeFromChat(Serialize::ChatMessage& msg
     chatContent.dbName = std::move(chatTape.dbname());
     chatContent.chatTitle = std::move(chatTape.chattitle());
 
-//    int numMessages = chatTape.messages_size();
     for(int i = 0; i < chatTape.messages_size(); ++i)
     {
         Serialize::userMessage* pCurMessage = chatTape.mutable_messages(i);
@@ -401,6 +401,91 @@ Database::chatMessagesTape decodeMessageTapeFromChat(Serialize::ChatMessage& msg
     }
 
     return chatContent;
+}
+
+Database::chatInfo decodeParticipantsListMessage(Serialize::ChatMessage& msg)
+{
+    Serialize::chatInfo srlInfo;
+    msg.mutable_payload()->UnpackTo(&srlInfo);
+
+    Database::chatInfo partInfo;
+    partInfo.title = srlInfo.title();
+
+    for(int i = 0; i < srlInfo.participants_size(); ++i)
+        partInfo.participants.push_back(std::move(*srlInfo.mutable_participants(i)));
+
+    return partInfo;
+}
+
+std::string createModifyChatParticipantsMessage(const std::string& dbName, const std::string&  collName,
+                                                const std::string&  chatTitle, const std::set<std::string>& delUsrs, const std::set<std::string>& addUsrs)
+{
+    Serialize::ModifyUsersChatInfo modifyInfoMsg;
+
+    modifyInfoMsg.set_dbname(dbName);
+    modifyInfoMsg.set_collectionname(collName);
+    modifyInfoMsg.set_chattitle(chatTitle);
+
+    int i = 0;
+    for(auto user: delUsrs)
+    {
+        modifyInfoMsg.set_userstodelete(i, std::move(user));
+        ++i;
+    }
+
+    i = 0;
+    for(auto user: addUsrs)
+    {
+        modifyInfoMsg.set_userstoadd(i, std::move(user));
+        ++i;
+    }
+
+    Serialize::ChatMessage msg;
+    msg.mutable_payload()->PackFrom(modifyInfoMsg);
+    msg.set_payload_type_id(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_MODIFY_CHAT_USERS_LIST));
+
+    std::string out;
+    if(msg.SerializeToString(&out))
+        return out;
+
+    return {};
+
+}
+
+std::vector<Database::chatInfo> decodeChatInfoMessages(Serialize::ChatMessage& msg)
+{
+    std::vector<Database::chatInfo> res;
+
+    if(!msg.has_payload())
+      return res;
+
+    Serialize::chatInfoArray chatsInfo;
+    msg.mutable_payload()->UnpackTo(&chatsInfo);
+
+    for(int i = 0; i < chatsInfo.chats_size(); ++i)
+    {
+       const Serialize::chatInfo& curInfo = chatsInfo.chats(i);
+       Database::chatInfo curChat;
+       curChat.title = curInfo.title();
+
+       for(int j = 0 ; j < curInfo.participants_size(); ++j)
+           curChat.participants.push_back(curInfo.participants(j));
+
+       res.push_back(curChat);
+    }
+
+    return res;
+}
+
+std::vector<Database::userInfo> decodeAllUsersMessage(Serialize::ChatMessage& msg)
+{
+    if(!msg.has_payload())
+        return {};
+
+    Serialize::UserInfoVector elements;
+    msg.mutable_payload()->UnpackTo(&elements);
+
+    return getUsers(elements);
 }
 /*
 message userMessage

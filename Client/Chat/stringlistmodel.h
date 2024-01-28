@@ -1,7 +1,8 @@
 #pragma once
 #include <QAbstractListModel>
-#include <QStringList>
+//#include <QStringList>
 #include <string>
+#include <set>
 #include <functional>
 
 class StringListModel : public QAbstractListModel
@@ -15,9 +16,9 @@ public:
     };
 
     StringListModel(QObject *parent = 0);
-
-    void addData(const std::string& info);
-    bool containsData(const std::string& info);
+    void addData(const std::set<std::string>& data);
+    void addData(const QString& info);
+    bool containsData(const QString& info);
     Q_INVOKABLE void addSampleData();
     Q_INVOKABLE bool changeSampleData(const QString& name);
     Q_INVOKABLE bool notEmpty() { return m_chats.count() > 0; }
@@ -35,13 +36,13 @@ public:
     QModelIndex createIndexForData(const QString& name);
 
 signals:
-   void itemSelected(std::string item);
+   void itemSelected(QString item);
 
 public slots:
     void slotSelect(int index);
 protected:
     QHash<int, QByteArray> roleNames() const;
 private:
-    QList<std::string> m_chats;
+    QList<QString> m_chats;
 };
 //https://stackoverflow.com/questions/11246022/how-to-get-qstring-from-qlistview-selected-item-in-qt

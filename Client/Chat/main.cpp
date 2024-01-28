@@ -95,8 +95,11 @@ https://habr.com/ru/companies/piter/articles/491996/
 https://habr.com/ru/companies/yandex/articles/420861/
 https://habr.com/ru/companies/ruvds/articles/755246/
 https://habr.com/ru/companies/wunderfund/articles/582000/
-
 */
 //http://thisthread.blogspot.com/2018/03/boost-asio-strand-example.html
 //https://copyprogramming.com/howto/what-is-the-advantage-of-strand-in-boost-asio
 //https://habr.com/ru/articles/195006/ https://zhaowuluo.wordpress.com/2010/12/25/multithreading-boostasio/
+/*
+cmake -S ./test_cmake -B ./debug -G "CodeBlocks - Unix Makefiles" -D CMAKE_BUILD_TYPE=Debug
+cmake --build ./debug
+*/

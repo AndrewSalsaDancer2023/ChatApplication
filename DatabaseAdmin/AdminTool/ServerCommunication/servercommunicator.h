@@ -8,6 +8,7 @@
 #include <memory.h>
 #include <string>
 #include <vector>
+#include <set>
 
 class NetworkCoordinatorInterface;
 
@@ -32,10 +33,10 @@ public:
     void sendGetChatsContainUserMessage(const std::string& dbName, const std::string& collName, const std::string& nickName);
     void sendAddUserToChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::string& nickName);
     void sendDeleteUserFromChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::string& nickName);
-    void sendCreateChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::vector<std::string>& participants);
+    void sendCreateChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::set<std::string>& participants);
     void sendMessageToChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName, const std::string& message);
     void sendGetMessageTapeFromChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName);
-
+    void sendModifyChatParticipantsMessage(const std::string& dbName, const std::string&  collName, const std::string&  chatTitle, std::set<std::string>& delUsrs, std::set<std::string>& addUsrs);
     void connectToHost();
 signals:
 

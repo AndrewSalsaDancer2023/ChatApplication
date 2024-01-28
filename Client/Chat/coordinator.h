@@ -10,6 +10,7 @@
 #include "stringlistmodel.h"
 #include "conversationmodel.h"
 #include "participantmodel.h"
+#include "chatstorage.h"
 #include <string>
 #include <map>
 #include <functional>
@@ -27,6 +28,8 @@ namespace Database
 {
     struct userInfo;
 };
+
+//class ChatStorage;
 
 //https://blog.felgo.com/cross-platform-app-development/how-to-expose-a-qt-cpp-class-with-signals-and-slots-to-qml#how-to-register-your-cpp-class-as-a-qml-type
 class Coordinator : public QObject, public NetworkCoordinatorInterface
@@ -101,6 +104,8 @@ signals:
 
     void showBusyIndicator();
     void hideBusyIndicator();
+
+    void scrollListToTheEnd();
 private:
     void handleAuthenticationSuccess(Serialize::ChatMessage& msg);
     void handleAuthenticationError(Serialize::ChatMessage& msg);
@@ -139,7 +144,8 @@ private:
 
     std::optional<Database::userInfo> userSelected;
     std::map<std::string, std::set<std::string>> chatsInfo;
-    std::vector<Database::userInfo> users;
+
+    ChatStorage chatStorage;
 
     QString nickName;
     QString databaseName;

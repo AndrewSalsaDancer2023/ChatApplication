@@ -1,7 +1,7 @@
 #pragma once
 #include <QAbstractListModel>
-#include <QStringList>
-#include <string>
+#include <memory>
+#include <vector>
 #include <functional>
 
 namespace Database {
@@ -21,12 +21,14 @@ public:
 
     ParticipantModel(QObject *parent = 0);
 
-    void addData(const Participant& info);
+    void setParticipants(std::shared_ptr<std::vector<Database::Participant>> part);
+    void addParticipant(const Participant& info);
     bool containsData(const Participant& info);
 //    Q_INVOKABLE bool notEmpty() { return m_chats.count() > 0; }
 //    Q_INVOKABLE QString  getItem(int index);
     const Participant&  getItem(int index);
     /////////////////////////////////////////////////////////////////////////////
+    int numRows() const;
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
     //////////////////////////////////////////////////////////////////////////////
@@ -34,7 +36,6 @@ public:
     std::optional<Participant>  getParticipant(const QString& nickName);
 
     void removeAllData();
-    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
     Qt::ItemFlags flags(const QModelIndex &index) const;
     QModelIndex createIndexForData(const Participant& part);
 
@@ -46,6 +47,6 @@ public slots:
 protected:
     QHash<int, QByteArray> roleNames() const;
 private:
-    QList<Participant> m_chats;
+    std::weak_ptr<std::vector<Database::Participant>> participants;
 };
 

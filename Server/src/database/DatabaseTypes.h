@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <map>
 #include <chrono>
 
 namespace Database {
@@ -62,29 +63,25 @@ struct Participant
     {
         return (name == other.name) && (surname == other.surname) && (nickname == other.nickname);
     }
+//    friend bool operator==(const Participant& lhs, const Participant& rhs);
+
+    friend bool operator==(const Participant& lhs, const Participant& rhs)
+    {
+        return (lhs.name == rhs.name) && (lhs.surname == rhs.surname) && (lhs.nickname == rhs.nickname);
+    }
 };
 
-/*
-struct userMessage
-{
-    std::string chatTitle;
-    std::string userNickName;
-    std::string userMessage;
-    int64_t timestamp;
-};
 
-struct chatMessage
-{
-	std::string chatTitle;
-    userMessage message;
-    std::vector<userMessage> comments;
-};
-*/
 struct singleUserMessage
 {
 	int64_t timestamp;
     std::string userNickName;
     std::string userMessage;
+
+    friend bool operator==(const singleUserMessage& lhs, const singleUserMessage& rhs)
+    {
+        return (lhs.timestamp == rhs.timestamp) && (lhs.userNickName == rhs.userNickName) && (lhs.userMessage == rhs.userMessage);
+    }
 };
 
 struct userChatMessage
@@ -98,6 +95,12 @@ struct chatMessagesTape
 {
 	std::string dbName;
 	std::string chatTitle;
+	std::vector<singleUserMessage> messages;
+};
+
+struct chatData
+{
+	std::vector<Participant> participants;
 	std::vector<singleUserMessage> messages;
 };
 

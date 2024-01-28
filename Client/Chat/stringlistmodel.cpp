@@ -45,8 +45,8 @@ bool StringListModel::setData(const QModelIndex &index, const QVariant &value, i
 
 //         Database::chatInfo &info = m_chats[index.row()];
 //         info.title = QString(value.toString()).toStdString();
-         std::string &info = m_chats[index.row()];
-         info = QString(value.toString()).toStdString();
+         QString &info = m_chats[index.row()];
+         info = QString(value.toString());
 
          emit dataChanged(index, index);
          return true;
@@ -54,7 +54,17 @@ bool StringListModel::setData(const QModelIndex &index, const QVariant &value, i
      return false;
  }
 
-void StringListModel::addData(const std::string& info)
+void StringListModel::addData(const std::set<std::string>& data)
+{
+    for(auto& str : data)
+    {
+        beginInsertRows(QModelIndex(), rowCount(), rowCount());
+        m_chats << QString::fromStdString(std::move(str));
+        endInsertRows();
+    }
+}
+
+void StringListModel::addData(const QString& info)
 {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
     m_chats << info;
@@ -71,11 +81,12 @@ QVariant StringListModel::data(const QModelIndex & index, int role) const {
         return QVariant();
 
 //    const Database::chatInfo &info = m_chats[index.row()];
-    const std::string &info = m_chats[index.row()];
+    const auto &info = m_chats[index.row()];
 
     if (role == NameRole)
-        return QString::fromStdString(info);
-        //return QString::fromStdString(info.title);
+        return info;
+//        return QString::fromStdString(info);
+
 /*
     if (role == NumberRole)
         return info.number;
@@ -102,7 +113,8 @@ QString  StringListModel::getItem(int index)
     if((index < 0) || (index >= m_chats.count()))
         return {};
 
-    return QString::fromStdString(m_chats[index]);
+//    return QString::fromStdString(m_chats[index]);
+    return m_chats[index];
 }
 
 void StringListModel::removeData(const QString& name)
@@ -110,7 +122,7 @@ void StringListModel::removeData(const QString& name)
     for(int i = 0; i < m_chats.count(); ++i)
     {
 //        if(m_chats.value(i).title != name.toStdString())
-        if(m_chats.value(i) != name.toStdString())
+        if(m_chats.value(i) != name)
             continue;
 
         beginRemoveRows(QModelIndex(), i, i);
@@ -125,7 +137,7 @@ QModelIndex StringListModel::createIndexForData(const QString& name)
     for(int i = 0; i < m_chats.count(); ++i)
     {
 //        if(m_chats.value(i).title != name.toStdString())
-        if(m_chats.value(i) != name.toStdString())
+        if(m_chats.value(i) != name)
             continue;
 
         return createIndex(i, 0);
@@ -133,7 +145,7 @@ QModelIndex StringListModel::createIndexForData(const QString& name)
     return {};
 }
 
-bool StringListModel::containsData(const std::string& info)
+bool StringListModel::containsData(const QString& info)
 {
     return m_chats.contains(info);
 }

@@ -5,6 +5,7 @@
 enum class PayloadType : unsigned int;
 namespace Database {
 struct userInfo;
+struct chatInfo;
 struct userChatMessage;
 struct chatMessagesTape;
 }
@@ -20,9 +21,14 @@ std::string createUpdateUserMessage(const std::string& dbName, const std::string
 std::string createGetChatsContainUserMessage(const std::string& dbName, const std::string& collName, const std::string& nickName);
 std::string createAddUserToChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::string& nickName);
 std::string createDeleteUserFromChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::string& nickName);
-std::string createChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::vector<std::string>& participants);
+std::string createChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::set<std::string>& participants);
 std::string createInfoChatMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName, const std::string& message);
 std::string createGetChatTapeMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName);
+std::string createModifyChatParticipantsMessage(const std::string& dbName, const std::string&  collName,
+                                                const std::string&  chatTitle, const std::set<std::string>& delUsrs, const std::set<std::string>& addUsrs);
 
 Database::chatMessagesTape decodeMessageTapeFromChat(Serialize::ChatMessage& msg);
 Database::userChatMessage decodeChatMessage(Serialize::ChatMessage& msg);
+Database::chatInfo decodeParticipantsListMessage(Serialize::ChatMessage& msg);
+std::vector<Database::chatInfo> decodeChatInfoMessages(Serialize::ChatMessage& msg);
+std::vector<Database::userInfo> decodeAllUsersMessage(Serialize::ChatMessage& msg);

@@ -53,32 +53,69 @@ bool ConversationModel::setData(const QModelIndex &index, const QVariant &value,
      return false;
  }
 
+int ConversationModel::numRows() const
+{
+    if(auto msgs = messages.lock(); msgs)
+        return msgs->size();
+
+    return 0;
+}
+
 void ConversationModel::addData(const Database::singleUserMessage& info)
 {
-    beginInsertRows(QModelIndex(), rowCount(), rowCount());
-    dataItems << info;
+    auto sp = messages.lock();
+    if(!sp)
+        return;
+
+    auto& container = *sp;
+    beginInsertRows(QModelIndex(), numRows(), numRows());
+    container.push_back(info);
+    endInsertRows();
+}
+
+void ConversationModel::addMessages(std::shared_ptr<std::vector<Database::singleUserMessage>> msgs)
+{
+    messages = msgs;
+
+    int nRows = numRows();
+    if(nRows <= 0)
+        return;
+
+    beginInsertRows(QModelIndex(), 0, nRows-1);
     endInsertRows();
 }
 
 int ConversationModel::rowCount(const QModelIndex & parent) const {
     Q_UNUSED(parent);
-    return dataItems.count();
+    return numRows();
 }
 
-QVariant ConversationModel::data(const QModelIndex & index, int role) const {
+bool ConversationModel::notEmpty()
+{
+    return numRows() > 0;
+}
+
+QVariant ConversationModel::data(const QModelIndex & index, int role) const
+{
+    auto sp = messages.lock();
+    if (index.row() < 0 || index.row() >= numRows() || !sp)
+        return QVariant();
+
+    const auto &msg = (*sp)[index.row()];
+/*
     if (index.row() < 0 || index.row() >= dataItems.count())
         return QVariant();
 
     const Database::singleUserMessage &info = dataItems[index.row()];
-
+*/
     if (role == UserNameRole)
-        return QString::fromStdString(info.userNickName);
+        return QString::fromStdString(msg.userNickName);
 
     if (role == DateRole)
-        return convertDateTimeToStringFast(info.timestamp);
+        return convertDateTimeToStringFast(msg.timestamp);
 
     if(role == MessageRole)
-        return QString::fromStdString(info.userMessage);
+        return QString::fromStdString(msg.userMessage);
 
     return QVariant();
 }
@@ -95,29 +132,42 @@ QHash<int, QByteArray> ConversationModel::roleNames() const {
 void  ConversationModel::slotSelect(int index)
 {
     qDebug() << "Selected item:" << index;
-    emit itemSelected(dataItems[index]);
+
+    auto mp = messages.lock();
+    if(!mp)
+        return;
+
+    emit itemSelected((*mp)[index]);
 }
 
 Database::singleUserMessage  ConversationModel::getItem(int index)
 {
-    if((index < 0) || (index >= dataItems.count()))
+    if((index < 0) || (index >= numRows()/*dataItems.count()*/))
         return {};
 
-    return dataItems[index];
+    auto mp = messages.lock();
+    return (*mp)[index];
 }
 
 void ConversationModel::removeData(const Database::singleUserMessage& message)
 {
-    for(int i = 0; i < dataItems.count(); ++i)
+    auto sp = messages.lock();
+    if (!sp)
+        return;
+
+    auto& container = *sp;
+    for(int i = 0; i < numRows()/*dataItems.count()*/; ++i)
     {
-        const auto& item = dataItems.value(i);
+        const auto& item = (*sp)[i];//dataItems.value(i);
         if((item.timestamp != message.timestamp) ||
            (item.userNickName != message.userNickName))
             continue;
         else
         {
             beginRemoveRows(QModelIndex(), i, i);
-            dataItems.removeAt(i);
+            //TODO delete from vector dataItems.removeAt(i);
+            const auto new_end (std::remove(std::begin(container), std::end(container), item));
+            container.erase(new_end, std::end(container));
             endRemoveRows();
             return;
         }
@@ -126,9 +176,13 @@ void ConversationModel::removeData(const Database::singleUserMessage& message)
 
 QModelIndex ConversationModel::createIndexForData(const Database::singleUserMessage& item)
 {
-    for(int i = 0; i < dataItems.count(); ++i)
+    auto sp = messages.lock();
+    if (!sp)
+        return {};
+
+    for(int i = 0; i < numRows()/*dataItems.count()*/; ++i)
     {
-        const auto& data = dataItems.value(i);
+        const auto& data = (*sp)[i];//dataItems.value(i);
 
         if((item.timestamp != data.timestamp) ||
            (item.userNickName != data.userNickName))
@@ -138,6 +192,19 @@ QModelIndex ConversationModel::createIndexForData(const Database::singleUserMess
     }
     return {};
 }
+
+void ConversationModel::removeAllData()
+{
+    //if(!m_chats.count())
+    if(!numRows())
+        return;
+
+//     beginRemoveRows(QModelIndex(), 0, m_chats.count() - 1);
+     beginRemoveRows(QModelIndex(), 0, numRows() - 1);
+     endRemoveRows();
+     messages.reset();
+}
+
 /*
 bool ConversationModel::containsData(const Database::singleUserMessage& info)
 {

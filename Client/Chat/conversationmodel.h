@@ -3,6 +3,7 @@
 #include <QStringList>
 #include <string>
 #include <functional>
+#include <memory>
 #include "../../Server/src/database/DatabaseTypes.h"
 
 class ConversationModel : public QAbstractListModel
@@ -18,10 +19,11 @@ public:
     ConversationModel(QObject *parent = 0);
 
     void addData(const Database::singleUserMessage& info);
+    void addMessages(std::shared_ptr<std::vector<Database::singleUserMessage>> msgs);
 //    bool containsData(const Database::singleUserMessage& info);
     Q_INVOKABLE void addSampleData();
     Q_INVOKABLE bool changeSampleData(const QString& name);
-    Q_INVOKABLE bool notEmpty() { return dataItems.count() > 0; }
+    Q_INVOKABLE bool notEmpty();
     Q_INVOKABLE Database::singleUserMessage getItem(int index);
     /////////////////////////////////////////////////////////////////////////////
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
@@ -31,7 +33,7 @@ public:
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
     Qt::ItemFlags flags(const QModelIndex &index) const;
     QModelIndex createIndexForData(const Database::singleUserMessage& item);
-
+    void removeAllData();
 signals:
    void itemSelected(Database::singleUserMessage item);
 
@@ -40,7 +42,9 @@ public slots:
 protected:
     QHash<int, QByteArray> roleNames() const;
 private:
-    QList<Database::singleUserMessage> dataItems;
+
+private:
+    int numRows() const;
+//    QList<Database::singleUserMessage> dataItems;
+    std::weak_ptr<std::vector<Database::singleUserMessage>> messages;
 };
-
-

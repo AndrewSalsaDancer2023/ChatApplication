@@ -48,6 +48,8 @@ else()
       coordinator.cpp
       commonutils.h
       commonutils.cpp
+      chatstorage.h
+      chatstorage.cpp
       ../../Server/build/authentication.pb.h
       ../../Server/build/authentication.pb.cc
       ../../Server/build/messages.pb.h

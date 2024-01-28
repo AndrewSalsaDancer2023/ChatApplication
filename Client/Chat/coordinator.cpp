@@ -199,8 +199,8 @@ void Coordinator::prepareMembersList()
     curParticipants.removeAllData();
     allUsers.removeAllData();
 
-    for(const auto& user: users)
-        allUsers.addData(Participant{user.name, user.surname, user.nickname});
+    for(const auto& user: chatStorage.getUsers())
+        allUsers.addParticipant(Participant{user.name, user.surname, user.nickname});
 }
 
 void Coordinator::prepareUsersLists(int index)
@@ -218,17 +218,16 @@ void Coordinator::prepareUsersLists(int index)
     {
         const auto& part = members.getItem(i);
         membersNicknames.insert(part.nickname);
-        curParticipants.addData(part);
+        curParticipants.addParticipant(part);
     }
 
-    std::set<Participant> usrs;
-    for(const auto& user: users)
+    for(const auto& user: chatStorage.getUsers())
     {
         auto it = membersNicknames.find(user.nickname);
         if(it != membersNicknames.end())
             continue;
 
-        allUsers.addData(Participant{user.name, user.surname, user.nickname});
+        allUsers.addParticipant(Participant{user.name, user.surname, user.nickname});
     }
 }
 
@@ -238,7 +237,7 @@ void Coordinator::removeParticipant(const QString& nickName)
     if(!part)
         return;
     curParticipants.removeParticipant(nickName);
-    allUsers.addData(*part);
+    allUsers.addParticipant(*part);
 }
 
 void Coordinator::addParticipant(const QString& nickName)
@@ -247,21 +246,9 @@ void Coordinator::addParticipant(const QString& nickName)
     if(!part)
         return;
     allUsers.removeParticipant(nickName);
-    curParticipants.addData(*part);
-}
-/*
-void Coordinator::addNewParticipants(std::set<std::string>& nickNames)
-{
-    if(nickNames.empty())
-        return;
+    curParticipants.addParticipant(*part);
 }
 
-void Coordinator::removeParticipants(std::set<std::string>& nickNames)
-{
-    if(nickNames.empty())
-        return;
-}
-*/
 void Coordinator::modifyChatParticipants(const QString& chat)
 {
     std::set<std::string> source = getNickNames(members);
@@ -377,28 +364,6 @@ void Coordinator::handleUpdateChatParticipants(Serialize::ChatMessage& msg)
 
 void Coordinator::handleCreateChatMessageSuccess(Serialize::ChatMessage& msg)
 {
-    /*
-ADDUserToChatInfo extractAddChatInfo(Serialize::ChatMessage& msg)
-{
-    Serialize::CreateChatInfo createChatRequest;
-    msg.mutable_payload()->UnpackTo(&createChatRequest);
-    std::cout << std::endl << "extractAddChatInfo" << std::endl;
-    auto dbName = std::move(createChatRequest.dbname());
-    auto chatCollectionName = std::move(createChatRequest.collectionname());
-    std::cout << dbName << " " << chatCollectionName << std::endl;
-    auto chatTitle = std::move(createChatRequest.chattitle());
-    auto participants = std::move(createChatRequest.participants());
-    std::cout << chatTitle << " part:" << std::endl;
-    std::set<std::string> partcpants;
-
-    for(const auto& participant: participants)
-    {
-        std::cout << participant << " " << std::endl;
-        partcpants.insert(participant);
-    }
-    return ADDUserToChatInfo{ dbName, chatCollectionName, chatTitle, partcpants };
-}
-*/
     int k = 10;
 }
 
@@ -407,29 +372,14 @@ void Coordinator::handleCreateChatMessageError(Serialize::ChatMessage& msg)
     const auto& chatTitle = msg.sender();
     int k = 10;
 }
-//refactor
+
 void Coordinator::handleGetChatsUserBelongsSuccess(Serialize::ChatMessage& msg)
 {
-  if(!msg.has_payload())
-    return;
-
-  Serialize::chatInfoArray chatsInfo;
-  msg.mutable_payload()->UnpackTo(&chatsInfo);
-
-  for(int i = 0; i < chatsInfo.chats_size(); ++i)
-  {
-     const Serialize::chatInfo& curInfo = chatsInfo.chats(i);
-     Database::chatInfo curChat;
-     curChat.title = curInfo.title();
-
-     for(int j = 0 ; j < curInfo.participants_size(); ++j)
-     {
-         curChat.participants.push_back(curInfo.participants(j));
-         if(auto res = getUserInfo(users, curInfo.participants(j)))
-            members.addData(*res);
-     }
-     chats.addData(curChat.title);
-  }
+  chatStorage.fillChatsInfo(decodeChatInfoMessages(msg));
+  chats.addData(chatStorage.getChatTiltles());
+  QString firstChat = chats.getItem(0);
+  if(!firstChat.isEmpty())
+    members.setParticipants(chatStorage.getParticipants(firstChat.toStdString()));
   getChatTapes();
   emit changeSendButtonState();
 }
@@ -450,14 +400,15 @@ void Coordinator::setAuthenticationData(QString login, QString password, QString
 
 void Coordinator::handleGetUsersInfoSuccess(Serialize::ChatMessage& msg)
 {
-    if(!msg.has_payload())
+/*    if(!msg.has_payload())
         return;
 
      Serialize::UserInfoVector elements;
      msg.mutable_payload()->UnpackTo(&elements);
 
-     users = std::move(getUsers(elements));
-     sendGetChatsContainUserMessage(databaseName, roomsCollName, nickName);
+    users = std::move(getUsers(elements));*/
+    chatStorage.addUsers(decodeAllUsersMessage(msg));
+    sendGetChatsContainUserMessage(databaseName, roomsCollName, nickName);
 }
 
 void Coordinator::handleGetUsersInfoError(Serialize::ChatMessage& msg)
@@ -470,10 +421,13 @@ void Coordinator::handleGetUsersInfoError(Serialize::ChatMessage& msg)
 
 void Coordinator::handleGetMessageFromChat(Serialize::ChatMessage& msg)
 {
-    const auto& decodedMsg = decodeChatMessage(msg);
-    if((databaseName.toStdString() != decodedMsg.dbName) || (!chats.containsData(decodedMsg.chatTitle)))
+    auto decodedMsg = decodeChatMessage(msg);
+    if((databaseName.toStdString() != decodedMsg.dbName) || (!chatStorage.chatExists(decodedMsg.chatTitle)))
         return;
-     convModel.addData(decodedMsg.message);
+//     convModel.addData(decodedMsg.message);
+//    chatStorage.addChatMessage(decodedMsg.chatTitle, decodedMsg.message);
+    convModel.addData(decodedMsg.message);
+    emit scrollListToTheEnd();
 }
 
 void Coordinator::handleGetMessageTapeFromChat(Serialize::ChatMessage& msg)
@@ -483,11 +437,16 @@ void Coordinator::handleGetMessageTapeFromChat(Serialize::ChatMessage& msg)
     if(databaseName.toStdString() != tape.dbName)
         return;
 
-    if(!chats.containsData(tape.chatTitle))
+//    if(!chats.containsData(QString::fromStdString(tape.chatTitle)))
+    if(!chatStorage.chatExists(tape.chatTitle))
         return;
 
-    for(const auto& msg : tape.messages)
+/*    for(const auto& msg : tape.messages)
         convModel.addData(msg);
+*/
+    chatStorage.addMessagesList(tape.chatTitle, tape.messages);
+    convModel.addMessages(chatStorage.getMessagesList(tape.chatTitle));
+    emit scrollListToTheEnd();
 }
 
 void Coordinator::handleGetMessageTapeFromChatError(Serialize::ChatMessage& msg)
@@ -529,6 +488,7 @@ void Coordinator::sendDeleteSelectedUserMessage(const std::string& dbName, const
 
 void Coordinator::sendAddUserMessage(const std::string& dbName, const std::string& collName, const Database::userInfo& info)
 {
+    const auto& users = chatStorage.getUsers();
     auto itFind = std::find_if(users.begin(), users.end(),[&info](const auto& user){
         return user.nickname == info.nickname;
     });
@@ -591,8 +551,8 @@ void Coordinator::sendChatMessage(const QString& channel, const QString& text)
 
 void Coordinator::getChatTapes()
 {
-    for(int i = 0 ; i < chats.rowCount(); ++i)
-        getChatTape(chats.getItem(i));
+    for(const auto& title : chatStorage.getChatTiltles())
+        getChatTape(QString::fromStdString(title));
 }
 
 void Coordinator::getChatTape(const QString& channel)
@@ -602,4 +562,3 @@ void Coordinator::getChatTape(const QString& channel)
 
     serverCommunicator->sendGetMessageTapeFromChat(databaseName.toStdString(), channel.toStdString(), nickName.toStdString());
 }
-
