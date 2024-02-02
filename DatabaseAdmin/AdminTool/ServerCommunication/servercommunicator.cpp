@@ -12,6 +12,13 @@ ServerCommunicator::ServerCommunicator(NetworkCoordinatorInterface& coord, QObje
 {
     connect(&m_webSocket, &QWebSocket::connected, this, &ServerCommunicator::onConnected);
     connect(&m_webSocket, &QWebSocket::disconnected, this, &ServerCommunicator::onDisconnected);
+/*
+    connect(&m_webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error),
+         [this](QAbstractSocket::SocketError error){
+        QString err = m_webSocket.errorString();
+        int k = 10;
+    });
+*/
 
     host = getHost(path);
 }

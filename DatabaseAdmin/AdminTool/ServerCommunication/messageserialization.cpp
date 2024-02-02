@@ -405,14 +405,17 @@ Database::chatMessagesTape decodeMessageTapeFromChat(Serialize::ChatMessage& msg
 
 Database::chatInfo decodeParticipantsListMessage(Serialize::ChatMessage& msg)
 {
+    Database::chatInfo partInfo;
+    if(!msg.has_payload())
+      return partInfo;
+
     Serialize::chatInfo srlInfo;
     msg.mutable_payload()->UnpackTo(&srlInfo);
 
-    Database::chatInfo partInfo;
     partInfo.title = srlInfo.title();
 
     for(int i = 0; i < srlInfo.participants_size(); ++i)
-        partInfo.participants.push_back(std::move(*srlInfo.mutable_participants(i)));
+        partInfo.participants.insert(std::move(*srlInfo.mutable_participants(i)));
 
     return partInfo;
 }
@@ -426,18 +429,14 @@ std::string createModifyChatParticipantsMessage(const std::string& dbName, const
     modifyInfoMsg.set_collectionname(collName);
     modifyInfoMsg.set_chattitle(chatTitle);
 
-    int i = 0;
     for(auto user: delUsrs)
     {
-        modifyInfoMsg.set_userstodelete(i, std::move(user));
-        ++i;
+        modifyInfoMsg.add_userstodelete(std::move(user));
     }
 
-    i = 0;
     for(auto user: addUsrs)
     {
-        modifyInfoMsg.set_userstoadd(i, std::move(user));
-        ++i;
+        modifyInfoMsg.add_userstoadd(std::move(user));
     }
 
     Serialize::ChatMessage msg;
@@ -469,7 +468,7 @@ std::vector<Database::chatInfo> decodeChatInfoMessages(Serialize::ChatMessage& m
        curChat.title = curInfo.title();
 
        for(int j = 0 ; j < curInfo.participants_size(); ++j)
-           curChat.participants.push_back(curInfo.participants(j));
+           curChat.participants.insert(curInfo.participants(j));
 
        res.push_back(curChat);
     }
@@ -487,6 +486,32 @@ std::vector<Database::userInfo> decodeAllUsersMessage(Serialize::ChatMessage& ms
 
     return getUsers(elements);
 }
+
+std::optional<ADDUserToChatInfo> decodeAddChatInfo(Serialize::ChatMessage& msg)
+{
+    if(!msg.has_payload())
+        return {};
+
+    Serialize::CreateChatInfo createChatRequest;
+    msg.mutable_payload()->UnpackTo(&createChatRequest);
+//    std::cout << std::endl << "extractAddChatInfo" << std::endl;
+    auto dbName = std::move(createChatRequest.dbname());
+    auto chatCollectionName = std::move(createChatRequest.collectionname());
+//    std::cout << dbName << " " << chatCollectionName << std::endl;
+    auto chatTitle = std::move(createChatRequest.chattitle());
+    auto participants = std::move(createChatRequest.participants());
+//    std::cout << chatTitle << " part:" << std::endl;
+    std::set<std::string> partcpants;
+
+    for(const auto& participant: participants)
+    {
+//        std::cout << participant << " " << std::endl;
+        partcpants.insert(participant);
+    }
+    return ADDUserToChatInfo{ dbName, chatCollectionName, chatTitle, partcpants };
+}
+
+
 /*
 message userMessage
 +{

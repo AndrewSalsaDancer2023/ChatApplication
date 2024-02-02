@@ -6,6 +6,7 @@
 #include "database/MongoRoutines.h"
 #include "database/DatabaseTypes.h"
 #include <google/protobuf/util/time_util.h>
+#include "utilities.h"
 /*
 #include <boost/uuid/detail/md5.hpp>
 #include <boost/algorithm/hex.hpp>
@@ -173,6 +174,52 @@ std::string serializeChatMessage(PayloadType type, Serialize::ChatMessage& msg)
 
 	return output;
 }
+
+ADDUserToChatInfo extractAddChatInfo(Serialize::ChatMessage& msg)
+{
+    Serialize::CreateChatInfo createChatRequest;
+	msg.mutable_payload()->UnpackTo(&createChatRequest);
+	std::cout << std::endl << "extractAddChatInfo" << std::endl;
+	auto dbName = createChatRequest.dbname();
+	auto chatCollectionName = createChatRequest.collectionname();
+	std::cout << dbName << " " << chatCollectionName << std::endl;
+	auto chatTitle = createChatRequest.chattitle();
+	auto participants = createChatRequest.participants();
+	std::cout << chatTitle << " part:" << std::endl;
+	std::set<std::string> partcpants;
+
+	for(const auto& participant: participants)
+	{
+		std::cout << participant << " " << std::endl;
+		partcpants.insert(participant);
+	}
+	return ADDUserToChatInfo{ dbName, chatCollectionName, chatTitle, partcpants };
+}
+
+ModifyUserInfo extractModifyUserInfo(Serialize::ChatMessage& msg)
+{
+    Serialize::ModifyUsersChatInfo modifyUsrToChatRequest;
+	msg.mutable_payload()->UnpackTo(&modifyUsrToChatRequest);
+
+	auto dbName = std::move(modifyUsrToChatRequest.dbname());
+	std::cout << "db:" << dbName << std::endl;
+	auto chatCollectionName = std::move(modifyUsrToChatRequest.collectionname());
+	std::cout << "chatCollectionName:" << chatCollectionName << std::endl;
+	auto chatTitle = std::move(modifyUsrToChatRequest.chattitle());
+
+	std::set<std::string> usersToDelete;
+	for(int i = 0; i < modifyUsrToChatRequest.userstodelete_size(); ++i)
+	{
+		std::cout << "userstodelete:" << *modifyUsrToChatRequest.mutable_userstodelete(i) << std::endl;
+		usersToDelete.insert(*modifyUsrToChatRequest.mutable_userstodelete(i));
+	}
+	std::set<std::string> usersToAdd;
+	for(int i = 0; i < modifyUsrToChatRequest.userstoadd_size(); ++i)
+		usersToAdd.insert(*modifyUsrToChatRequest.mutable_userstoadd(i));
+
+	return { dbName, chatCollectionName, chatTitle, usersToDelete, usersToAdd };
+}
+
 /*
 std::string toString(const md5::digest_type &digest)
 {

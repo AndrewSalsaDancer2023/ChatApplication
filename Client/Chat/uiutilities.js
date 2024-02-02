@@ -34,30 +34,29 @@ var notEnoughParticipants = "minimum two participants should be added"
 var tooShortChatTitle = "Short chat title. Should be min 8 symbols"
 var tooShortChatDescr = "Short chat description. Should be min 20 symbols"
 
-var examplShortChatDescr = String.format('{0} is dead, but {1} is alive! {0} {2}', 'ASP', 'ASP.NET');
+var connection = "Connection..."
+var authenticate = "Authentication..."
 
-var indicatorShown = false
+//var examplShortChatDescr = String.format('{0} is dead, but {1} is alive! {0} {2}', 'ASP', 'ASP.NET');
 
-function createBusyIndicator(root, indicator)
+function createBusyIndicator(root, indicator, message)
 {
-    if(/*indicator === null*/indicatorShown === false) {
+    if(indicator === null) {
         var component = Qt.createComponent("BusyIndicator.qml")
         indicator = component.createObject(root, {"x" : 0, "y" : 0})
         if(indicator !== null) {
             indicator.anchors.centerIn = root
-            indicatorShown = true
+            indicator.waitingMessage = message
         }
     }
 }
 
 function destroyBusyIndocator(indicator) {
-    if(/*indicator !== null*/indicatorShown === true) {
+    if(indicator !== null) {
         indicator.destroy()
         indicator = null
     }
 }
-
-var messageWindowShown = false
 
 var messageWindow = null
 

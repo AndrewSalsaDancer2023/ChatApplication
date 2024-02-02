@@ -3,6 +3,8 @@
 #include <vector>
 
 enum class PayloadType : unsigned int;
+using ADDUserToChatInfo = std::tuple<std::string, std::string, std::string, std::set<std::string> >;
+using ModifyUserInfo = std::tuple<std::string, std::string, std::string, std::set<std::string>, std::set<std::string>>;
 
 namespace Database {
  struct userInfo;
@@ -64,3 +66,6 @@ std::string serializeAllChatsUserBelongsToMessage(PayloadType type, const Databa
 std::string serializeChatMessagesTape(PayloadType type, const Database::chatMessagesTape& tape);
 std::string serializeChatMessage(PayloadType type, Serialize::ChatMessage& msg);
 std::string serializeGetChatParticipantsMessage(PayloadType type, const Database::chatInfo& info);
+
+ADDUserToChatInfo extractAddChatInfo(Serialize::ChatMessage& msg);
+ModifyUserInfo extractModifyUserInfo(Serialize::ChatMessage& msg);

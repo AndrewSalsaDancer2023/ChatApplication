@@ -34,6 +34,7 @@ void ParticipantModel::addParticipant(const Participant& info)
 
 void ParticipantModel::setParticipants(std::shared_ptr<std::vector<Database::Participant>> part)
 {
+    removeAllData();
     participants = part;
     int nRows = numRows();
     if(nRows > 0)

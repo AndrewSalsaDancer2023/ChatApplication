@@ -2,8 +2,10 @@ import QtQuick.Controls 1.5
 import QtQuick.Controls.Styles 1.4
 import QtQuick 2.12
 import Authentication 1.0
+import "qrc:/uiutilities.js" as Utils
 
 Rectangle {
+    id: createChannel
     anchors.fill: parent
     anchors.centerIn: parent
     color: "grey"
@@ -59,7 +61,7 @@ Rectangle {
                      onClicked: {
                          if(channelTitle.text.length < Utils.minChatTitleLength)
                          {
-                            Utils.createMessageWindow(addParticipantsForm, Utils.tooShortChatTitle)
+                            Utils.createMessageWindow(createChannel, Utils.tooShortChatTitle)
                              return
                          }
 /*
@@ -71,12 +73,12 @@ Rectangle {
 */
                          if(Coordinator.hasCorrectChatParticipants() === true)
                          {
-                             Coordinator.createChat(channelTitle, channelDescription)
+                             Coordinator.createChat(channelTitle.text)//, channelDescription)
                              stackView.pop()
                          }
                          else
                          {
-                             Utils.createMessageWindow(addParticipantsForm, Utils.notEnoughParticipants)
+                             Utils.createMessageWindow(createChannel, Utils.notEnoughParticipants)
                          }
                      }
                  }

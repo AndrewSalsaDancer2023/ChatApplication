@@ -75,6 +75,7 @@ void ConversationModel::addData(const Database::singleUserMessage& info)
 
 void ConversationModel::addMessages(std::shared_ptr<std::vector<Database::singleUserMessage>> msgs)
 {
+    removeAllData();
     messages = msgs;
 
     int nRows = numRows();

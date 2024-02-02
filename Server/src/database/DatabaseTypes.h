@@ -32,7 +32,7 @@ struct userInfo
 struct chatInfo
 {
 	std::string title;
-	std::vector<std::string> participants;
+    std::set<std::string> participants;
 };
 
 struct chatInfoArray
@@ -59,11 +59,11 @@ struct Participant
     std::string name;
     std::string surname;
     std::string nickname;
+
     bool operator == (const Participant& other)
     {
         return (name == other.name) && (surname == other.surname) && (nickname == other.nickname);
     }
-//    friend bool operator==(const Participant& lhs, const Participant& rhs);
 
     friend bool operator==(const Participant& lhs, const Participant& rhs)
     {

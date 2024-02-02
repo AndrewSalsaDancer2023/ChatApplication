@@ -1,6 +1,7 @@
 #include "chatstorage.h"
 #include "../../Server/src/database/DatabaseTypes.h"
 #include "../../Client/Chat/commonutils.h"
+#include <algorithm>
 
 ChatStorage::ChatStorage()
 {
@@ -59,6 +60,42 @@ std::shared_ptr<participantList> ChatStorage::getParticipants(const std::string&
     return {} ;
 }
 
+std::shared_ptr<participantList> ChatStorage::copyParticipants(const std::string& title)
+{
+    auto itFind = dataModel.find(title);
+    if (itFind != dataModel.end())
+    {
+        std::shared_ptr<participantList> res = std::make_shared<participantList>();
+        *res = (*itFind).second->participants;
+        return res;
+    }
+    return {} ;
+}
+
+std::shared_ptr<participantList> ChatStorage::copyUsers()
+{
+    std::shared_ptr<participantList> res = std::make_shared<participantList>();
+
+    for(const auto& user: users)
+        (*res).push_back(std::move(Database::Participant{user.name, user.surname, user.nickname}));
+
+    return res;
+}
+
+std::shared_ptr<participantList> ChatStorage::copyUsersExceptChatMembers(const std::set<std::string>& members)
+{
+    std::shared_ptr<participantList> res = std::make_shared<participantList>();
+
+    std::for_each(users.cbegin(), users.cend(),
+                  [&res, &members](const auto& user){
+                    if(members.find(user.nickname) != members.end())
+                        return;
+                    (*res).push_back(std::move(Database::Participant{user.name, user.surname, user.nickname}));
+                  });
+
+    return res;
+}
+
 void ChatStorage::addParticipantsList(const std::string& title, participantList& partList)
 {
     addChatTilte(title);
@@ -69,13 +106,31 @@ void ChatStorage::fillChatsInfo(const std::vector<Database::chatInfo>& chats)
 {
     for(const auto& chat : chats)
     {
-        for(int i = 0; i < chat.participants.size(); ++i)
+//        for(int i = 0; i < chat.participants.size(); ++i)
+        for(const auto& participant : chat.participants)
         {
-            if(auto part = getUserInfo(users, chat.participants[i]))
+            if(auto part = getUserInfo(users, participant))//chat.participants[i]))
                 addChatParticipant(chat.title, *part);
         }
     }
 }
+
+void ChatStorage::changeChatParticipants(const Database::chatInfo& chat)
+{
+    std::shared_ptr<participantList> partList = ChatStorage::getParticipants(chat.title);
+    if(!partList)
+        return;
+
+    partList->clear();
+    for(const auto& participant : chat.participants)
+    {
+        if(auto part = getUserInfo(users, participant))
+            addChatParticipant(chat.title, *part);
+    }
+}
+
+
+
 
 void ChatStorage::addChatParticipant(const std::string& title, Database::Participant& participant)
 {

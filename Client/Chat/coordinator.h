@@ -69,7 +69,7 @@ public:
     Q_INVOKABLE void modifyChatParticipants(const QString& chat);
     Q_INVOKABLE void removeParticipant(const QString& nickName);
     Q_INVOKABLE void addParticipant(const QString& nickName);
-    Q_INVOKABLE void createChat(const QString& chatTitle, const QString& description);
+    Q_INVOKABLE void createChat(const QString& chatTitle/*, const QString& description*/);
 
     void getChatTape(const QString& channel);
     void getChatTapes();
@@ -83,11 +83,10 @@ public:
     ParticipantModel& getAllUsers() { return allUsers; }
     ParticipantModel& getParticipants() { return curParticipants; }
 
-//    void addNewParticipants(std::set<std::string>& nickNames);
-//    void removeParticipants(std::set<std::string>& nickNames);
-
+    Q_INVOKABLE QString getCurrentChatTitle() { return curChat; }
+    Q_INVOKABLE void copyChatParticipants();
 private slots:
-    void onChatSelected(std::string item);
+    void onChatSelected(QString item);
     void onConnectionTimeout();
 signals:
     void authSuccess();
@@ -125,7 +124,7 @@ private:
 
     void handleDeleteUsersFromChatError(Serialize::ChatMessage& msg);
     void handleAddUsersFromChatError(Serialize::ChatMessage& msg);
-    void handleModifyChatUsersSuccess(Serialize::ChatMessage& msg);
+//    void handleModifyChatUsersSuccess(Serialize::ChatMessage& msg);
     void handleUpdateChatParticipants(Serialize::ChatMessage& msg);
 
     commState state{commState::Disconnected};
@@ -134,6 +133,7 @@ private:
 
     void tryToLogin();
     std::set<std::string> getNickNames(ParticipantModel& model);
+    std::set<std::string> participants;
 
     bool authorized{false};
     StringListModel chats;
@@ -150,6 +150,10 @@ private:
     QString nickName;
     QString databaseName;
     QString usrPassword;
+
+    QString curChat;
     bool loginScreenShown = false;
+    std::shared_ptr<participantList> allUsersModel;
+    std::shared_ptr<participantList> curPartcpantsModel;
     std::unique_ptr<QTimer> conTimer;
 };

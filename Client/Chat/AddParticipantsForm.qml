@@ -5,16 +5,22 @@ import Authentication 1.0
 import "qrc:/uiutilities.js" as Utils
 
 Rectangle {
-    id: addParticipantsForm
+    id: modifyParticipantsForm
     anchors.fill: parent
     color: "grey"
-//    property var buttonText
+    property var chatTitle
+
+    Component.onCompleted: {
+        chatTitle = Coordinator.getCurrentChatTitle()
+        Coordinator.copyChatParticipants()
+    }
+
 
     Connections {
         target: Coordinator
 
         onShowError:{
-             Utils.createMessageWindow(addParticipantsForm, message)
+             Utils.createMessageWindow(modifyParticipantsForm, message)
         }
     }
 
@@ -26,8 +32,20 @@ Rectangle {
     Text {
             id: captionTitle
             font.pixelSize: 32
-            text: "Participants adding"
+            text: "Participants modify"
             anchors.horizontalCenter: parent.horizontalCenter
+    }
+    Row {
+        spacing: 10
+        anchors.horizontalCenter: parent.horizontalCenter
+        Text {
+                font.pixelSize: 20
+                text: "chat:"
+        }
+        Text {
+                font.pixelSize: 20
+                text: chatTitle
+        }
     }
     ParticipantList {
         id: partList
@@ -82,12 +100,13 @@ Rectangle {
             onClicked: {
                 if(Coordinator.hasCorrectChatParticipants() === true)
                 {
-                    Coordinator.modifyChatParticipants(chatsList.getItem(chatList.currentItem))
+                    console.log("modify chat"+chatTitle)
+                    Coordinator.modifyChatParticipants(chatTitle)
                     stackView.pop()
                 }
                 else
                 {
-                    Utils.createMessageWindow(addParticipantsForm, Utils.notEnoughParticipants)
+                    Utils.createMessageWindow(modifyParticipantsForm, Utils.notEnoughParticipants)
                 }
             }
         }

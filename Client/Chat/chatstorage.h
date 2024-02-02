@@ -24,8 +24,13 @@ public:
     void addChatMessage(const std::string& title, Database::singleUserMessage& msg);
 
     std::shared_ptr<participantList> getParticipants(const std::string& title);
+    std::shared_ptr<participantList> copyParticipants(const std::string& title);
+    std::shared_ptr<participantList> copyUsers();
+    std::shared_ptr<participantList> copyUsersExceptChatMembers(const std::set<std::string>& members);
+
     void addParticipantsList(const std::string& title, participantList& partList);
     void fillChatsInfo(const std::vector<Database::chatInfo>& chats);
+    void changeChatParticipants(const Database::chatInfo& chat);
     void addChatParticipant(const std::string& title, Database::Participant& participant);
     void addUsers(std::vector<Database::userInfo> usrs) { users = std::move(usrs); }
     const usersList& getUsers() { return users; }

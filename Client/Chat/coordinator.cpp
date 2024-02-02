@@ -116,20 +116,20 @@ Coordinator::Coordinator(QObject *parent) :
             {
                handleAddUsersFromChatError(msg);
             };
-
+/*
      handlers[static_cast<::google::protobuf::uint32>(PayloadType::SERVER_MODIFY_CHAT_USERS_SUCCESS)] =
                [this](Serialize::ChatMessage& msg)
             {
                handleModifyChatUsersSuccess(msg);
             };
-
+*/
      handlers[static_cast<::google::protobuf::uint32>(PayloadType::SERVER_CHAT_PARTICIPANTS_UPDATED)] =
                [this](Serialize::ChatMessage& msg)
             {
                handleUpdateChatParticipants(msg);
             };
 
-    connect(&chats, SIGNAL(itemSelected(std::string)), this, SLOT(onChatSelected(std::string)));
+    connect(&chats, SIGNAL(itemSelected(QString)), this, SLOT(onChatSelected(QString)));
 
     conTimer = std::make_unique<QTimer>();
     connect(conTimer.get(), &QTimer::timeout, this, &Coordinator::onConnectionTimeout);
@@ -161,9 +161,11 @@ Coordinator::Coordinator(QObject *parent) :
     serverCommunicator->connectToHost();
  }
 
-void Coordinator::onChatSelected(std::string item)
+void Coordinator::onChatSelected(QString item)
 {
-    int k = 10;
+    members.setParticipants(chatStorage.getParticipants(item.toStdString()));
+    convModel.addMessages(chatStorage.getMessagesList(item.toStdString()));
+    emit scrollListToTheEnd();
 }
 
 void Coordinator::mainWindowLoaded()
@@ -199,8 +201,11 @@ void Coordinator::prepareMembersList()
     curParticipants.removeAllData();
     allUsers.removeAllData();
 
-    for(const auto& user: chatStorage.getUsers())
-        allUsers.addParticipant(Participant{user.name, user.surname, user.nickname});
+    curPartcpantsModel = std::make_shared<participantList>();
+    curParticipants.setParticipants(curPartcpantsModel);
+
+    allUsersModel = chatStorage.copyUsers();
+    allUsers.setParticipants(allUsersModel);
 }
 
 void Coordinator::prepareUsersLists(int index)
@@ -218,9 +223,14 @@ void Coordinator::prepareUsersLists(int index)
     {
         const auto& part = members.getItem(i);
         membersNicknames.insert(part.nickname);
-        curParticipants.addParticipant(part);
+//        curParticipants.addParticipant(part);
     }
 
+    curParticipants.setParticipants(chatStorage.getParticipants(title.toStdString()));
+
+    allUsersModel = chatStorage.copyUsersExceptChatMembers(membersNicknames);
+    allUsers.setParticipants(allUsersModel);
+    /*
     for(const auto& user: chatStorage.getUsers())
     {
         auto it = membersNicknames.find(user.nickname);
@@ -228,7 +238,19 @@ void Coordinator::prepareUsersLists(int index)
             continue;
 
         allUsers.addParticipant(Participant{user.name, user.surname, user.nickname});
+    }*/
+/*
+    curUsers = std::make_shared<std::vector<Database::Participant>>();
+    for(const auto& user: chatStorage.getUsers())
+    {
+        auto it = membersNicknames.find(user.nickname);
+        if(it != membersNicknames.end())
+            continue;
+        curUsers->push_back(std::move(Participant{user.name, user.surname, user.nickname}));
+        //allUsers.addParticipant(Participant{user.name, user.surname, user.nickname});
     }
+    allUsers.setParticipants(curUsers);
+    */
 }
 
 void Coordinator::removeParticipant(const QString& nickName)
@@ -249,18 +271,27 @@ void Coordinator::addParticipant(const QString& nickName)
     curParticipants.addParticipant(*part);
 }
 
+void Coordinator::copyChatParticipants()
+{
+    participants = getNickNames(curParticipants);
+    int k = 10;
+}
+
 void Coordinator::modifyChatParticipants(const QString& chat)
 {
-    std::set<std::string> source = getNickNames(members);
+//    std::set<std::string> source = getNickNames(members);
     std::set<std::string> dest = getNickNames(curParticipants);
 
     std::set<std::string> delUsrs, addUsrs;
 
-    std::set_difference(source.begin(), source.end(), dest.begin(), dest.end(),
+    std::set_difference(participants.begin(), participants.end(), dest.begin(), dest.end(),
                              std::inserter(delUsrs, delUsrs.begin()));
 
-    std::set_difference(dest.begin(), dest.end(), source.begin(), source.end(),
+    std::set_difference(dest.begin(), dest.end(), participants.begin(), participants.end(),
                              std::inserter(addUsrs, addUsrs.begin()));
+
+    if(delUsrs.empty() && addUsrs.empty())
+        return;
 
     serverCommunicator->sendModifyChatParticipantsMessage(databaseName.toStdString(), roomsCollName.toStdString(), chat.toStdString(), delUsrs, addUsrs);
 }
@@ -271,7 +302,7 @@ bool Coordinator::hasCorrectChatParticipants()
 }
 
 
-void Coordinator::createChat(const QString& chatTitle, const QString& description)
+void Coordinator::createChat(const QString& chatTitle/*, const QString& description*/)
 {
     const QString collName{"chatrooms"};
     std::set<std::string> participants = getNickNames(curParticipants);
@@ -349,22 +380,37 @@ void Coordinator::handleAddUsersFromChatError(Serialize::ChatMessage& msg)
     QString message = "Unable to add users to chat:"+QString::fromStdString(chatTitle);
     emit showError(message);
 }
-
+/*
 void Coordinator::handleModifyChatUsersSuccess(Serialize::ChatMessage& msg)
 {
     const auto& chatTitle = msg.sender();
     int k = 10;
 }
-
+*/
 void Coordinator::handleUpdateChatParticipants(Serialize::ChatMessage& msg)
 {
     auto res = decodeParticipantsListMessage(msg);
-    int k = 10;
+    chatStorage.changeChatParticipants(res);
+
+    if(curChat != QString::fromStdString(res.title))
+        return;
+
+    members.setParticipants(chatStorage.getParticipants(curChat.toStdString()));
 }
 
 void Coordinator::handleCreateChatMessageSuccess(Serialize::ChatMessage& msg)
 {
-    int k = 10;
+    auto optInfo = decodeAddChatInfo(msg);
+    if(!optInfo)
+        return;
+
+    const auto& [dbName, chatCollectionName, chatTitle, partcpants] = *optInfo;
+    if(databaseName.toStdString() != dbName)
+        return;
+
+    Database::chatInfo info{chatTitle, partcpants};
+    chatStorage.fillChatsInfo({info});
+    chats.addData(QString::fromStdString(chatTitle));
 }
 
 void Coordinator::handleCreateChatMessageError(Serialize::ChatMessage& msg)
@@ -377,11 +423,14 @@ void Coordinator::handleGetChatsUserBelongsSuccess(Serialize::ChatMessage& msg)
 {
   chatStorage.fillChatsInfo(decodeChatInfoMessages(msg));
   chats.addData(chatStorage.getChatTiltles());
-  QString firstChat = chats.getItem(0);
-  if(!firstChat.isEmpty())
-    members.setParticipants(chatStorage.getParticipants(firstChat.toStdString()));
+  if(!chats.rowCount())
+      return;
+  curChat = chats.getItem(0);
+
+  members.setParticipants(chatStorage.getParticipants(curChat.toStdString()));
   getChatTapes();
-  emit changeSendButtonState();
+
+//  emit changeSendButtonState();
 }
 
 void Coordinator::handleGetChatsUserBelongsError(Serialize::ChatMessage& msg)
@@ -445,8 +494,8 @@ void Coordinator::handleGetMessageTapeFromChat(Serialize::ChatMessage& msg)
         convModel.addData(msg);
 */
     chatStorage.addMessagesList(tape.chatTitle, tape.messages);
-    convModel.addMessages(chatStorage.getMessagesList(tape.chatTitle));
-    emit scrollListToTheEnd();
+//    convModel.addMessages(chatStorage.getMessagesList(tape.chatTitle));
+//    emit scrollListToTheEnd();
 }
 
 void Coordinator::handleGetMessageTapeFromChatError(Serialize::ChatMessage& msg)

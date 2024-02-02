@@ -6,6 +6,7 @@ Rectangle {
    id: waitingIndicator
    width: parent.width
    height: parent.height
+   property var waitingMessage
 //    width: dialogContainer.width + 20
 //    height: dialogContainer.height + 20
     anchors.centerIn: parent
@@ -17,6 +18,7 @@ Rectangle {
         spacing: 4
         anchors.centerIn: parent
         BusyIndicator {
+            anchors.horizontalCenter: parent.horizontalCenter
             running: true
         }
         Text
@@ -25,7 +27,7 @@ Rectangle {
             font.pixelSize: 20
             anchors.horizontalCenter: parent.horizontalCenter
 //            color: "#F69678"
-            text: "Waiting..."
+            text: waitingMessage
         }
 
     }

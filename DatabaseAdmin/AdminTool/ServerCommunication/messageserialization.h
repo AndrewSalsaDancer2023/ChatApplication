@@ -10,6 +10,8 @@ struct userChatMessage;
 struct chatMessagesTape;
 }
 
+using ADDUserToChatInfo = std::tuple<std::string, std::string, std::string, std::set<std::string> >;
+
 std::string createAuthorizationMessage(const std::string& login, const std::string& password, const std::string& dbName);
 Serialize::ChatMessage decodeMessageFromString(const std::string& message);
 std::string createNoPayloadMessage(PayloadType type, const std::string& description = "");
@@ -32,3 +34,4 @@ Database::userChatMessage decodeChatMessage(Serialize::ChatMessage& msg);
 Database::chatInfo decodeParticipantsListMessage(Serialize::ChatMessage& msg);
 std::vector<Database::chatInfo> decodeChatInfoMessages(Serialize::ChatMessage& msg);
 std::vector<Database::userInfo> decodeAllUsersMessage(Serialize::ChatMessage& msg);
+std::optional<ADDUserToChatInfo> decodeAddChatInfo(Serialize::ChatMessage& msg);

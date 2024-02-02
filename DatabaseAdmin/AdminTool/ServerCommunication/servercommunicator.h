@@ -45,6 +45,7 @@ public slots:
 private Q_SLOTS:
     void onConnected();
     void onBinaryMessageReceived(const QByteArray &message);
+
 //     commState state{commState::Disconnected};
 private:
      QString host;

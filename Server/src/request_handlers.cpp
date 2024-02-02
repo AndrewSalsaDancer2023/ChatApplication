@@ -227,30 +227,6 @@ void handleModifyUser(websocket_session& session, Serialize::ChatMessage& msg)
 	    session.send(ss);
 }
 
-using ADDUserToChatInfo = std::tuple<std::string, std::string, std::string, std::set<std::string> >;
-
-ADDUserToChatInfo extractAddChatInfo(Serialize::ChatMessage& msg)
-{
-    Serialize::CreateChatInfo createChatRequest;
-	msg.mutable_payload()->UnpackTo(&createChatRequest);
-	std::cout << std::endl << "extractAddChatInfo" << std::endl;
-	auto dbName = std::move(createChatRequest.dbname());
-	auto chatCollectionName = std::move(createChatRequest.collectionname());
-	std::cout << dbName << " " << chatCollectionName << std::endl;
-	auto chatTitle = std::move(createChatRequest.chattitle());
-	auto participants = std::move(createChatRequest.participants());
-	std::cout << chatTitle << " part:" << std::endl;
-	std::set<std::string> partcpants;
-
-	for(const auto& participant: participants)
-	{
-		std::cout << participant << " " << std::endl;
-		partcpants.insert(participant);
-	}
-	return ADDUserToChatInfo{ dbName, chatCollectionName, chatTitle, partcpants };
-}
-
-
 void handleCreateChat(websocket_session& session, Serialize::ChatMessage& msg)
 {
 	if(!msg.has_payload())
@@ -293,32 +269,6 @@ DBInfo extractDBInfo(Serialize::ChatMessage& msg)
 	auto userNickname = std::move(addUsrToChatRequest.usernickname());
 
 	return { dbName, chatCollectionName, chatTitle, userNickname };
-}
-
-using ModifyUserInfo = std::tuple<std::string, std::string, std::string, std::set<std::string>, std::set<std::string>>;
-
-ModifyUserInfo extractModifyUserInfo(Serialize::ChatMessage& msg)
-{
-    Serialize::ModifyUsersChatInfo modifyUsrToChatRequest;
-	msg.mutable_payload()->UnpackTo(&modifyUsrToChatRequest);
-
-	auto dbName = std::move(modifyUsrToChatRequest.dbname());
-	std::cout << "db:" << dbName << std::endl;
-	auto chatCollectionName = std::move(modifyUsrToChatRequest.collectionname());
-	std::cout << "chatCollectionName:" << chatCollectionName << std::endl;
-	auto chatTitle = std::move(modifyUsrToChatRequest.chattitle());
-
-	std::set<std::string> usersToDelete;
-	for(int i = 0; i < modifyUsrToChatRequest.userstodelete_size(); ++i)
-	{
-		std::cout << "userstodelete:" << *modifyUsrToChatRequest.mutable_userstodelete(i) << std::endl;
-		usersToDelete.insert(*modifyUsrToChatRequest.mutable_userstodelete(i));
-	}
-	std::set<std::string> usersToAdd;
-	for(int i = 0; i < modifyUsrToChatRequest.userstoadd_size(); ++i)
-		usersToAdd.insert(*modifyUsrToChatRequest.mutable_userstoadd(i));
-
-	return { dbName, chatCollectionName, chatTitle, usersToDelete, usersToAdd };
 }
 
 void handleAddUserToChat(websocket_session& session, Serialize::ChatMessage& msg)
@@ -376,25 +326,45 @@ void handleModifyChatUsersList(websocket_session& session, Serialize::ChatMessag
 				 usersToDelete, usersToAdd] = extractModifyUserInfo(msg);
 
 	auto &dbInstance =  DatabaseDriver::instance();
-	bool deleteOk = true, addOk = true;
+//	bool deleteOk = true, addOk = true;
 
-	if(dbInstance.deleteUsersFromChat(dbName, chatCollectionName, chatTitle, usersToDelete))
-		deleteOk = false;
+	std::string result;
+	if(!usersToDelete.empty())
+	{
+		if(!dbInstance.deleteUsersFromChat(dbName, chatCollectionName, chatTitle, usersToDelete))
+		{
+			result = serializeNoPayloadMessage(PayloadType::SERVER_DELETE_USERS_FROM_CHAT_ERROR, chatTitle);
+			auto const ss = boost::make_shared<std::string const>(std::move(result));
+			session.send(ss);
+			return;
+		}
+	}
+//		deleteOk = false;
 
-	if(dbInstance.addUsersToChat(dbName, chatCollectionName, chatTitle, usersToAdd))
-		addOk = false;
-
+	if(!usersToAdd.empty())
+	{
+		if(!dbInstance.addUsersToChat(dbName, chatCollectionName, chatTitle, usersToAdd))
+		{
+			result = serializeNoPayloadMessage(PayloadType::SERVER_ADD_USERS_TO_CHAT_ERROR, chatTitle);
+			auto const ss = boost::make_shared<std::string const>(std::move(result));
+			session.send(ss);
+			return;
+		}
+	}
+//		addOk = false;
+/*
 	std::string result;
 	if(!deleteOk)
 		result = serializeNoPayloadMessage(PayloadType::SERVER_DELETE_USERS_FROM_CHAT_ERROR, chatTitle);
 	else
 		if(!addOk)
 			result = serializeNoPayloadMessage(PayloadType::SERVER_ADD_USERS_TO_CHAT_ERROR, chatTitle);
-//TO DELETE
+			*/
+/*
 	 result = serializeNoPayloadMessage(PayloadType::SERVER_MODIFY_CHAT_USERS_SUCCESS, chatTitle);
 	 auto const ss = boost::make_shared<std::string const>(std::move(result));
 	 session.send(ss);
-//
+*/
 	 handleGetChatParticipants(dbName, chatCollectionName, chatTitle, session);
 }
 

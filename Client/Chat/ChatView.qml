@@ -88,7 +88,7 @@ SplitView {
              Button {
                  id: channelsButton
                  width: parent.width
-                 text: "Create channel"
+                 text: "Add channel"
                  onClicked: {
                      Coordinator.prepareMembersList()
                      stackView.push("qrc:/AddChannelForm.qml")
@@ -97,7 +97,7 @@ SplitView {
              Button {
                  id: profileButton
                  width: parent.width
-                 text: "Add members"
+                 text: "Change members"
                  onClicked:  {
                    Coordinator.prepareUsersLists(chatList.currentIndex)
 //                     chatsList.getItem(chatList.currentIndex).

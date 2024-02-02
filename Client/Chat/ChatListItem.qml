@@ -4,15 +4,16 @@ Component {
     id: contactsDelegate
     Rectangle {
         id: wrapper
+        border.width: 1
         width: parent.width
         height: contactInfo.height + 6
         radius : 5
-        color: ListView.isCurrentItem ? "black" : "red"
+        color: ListView.isCurrentItem ? "blue" : "lightblue"
         Text {
             id: contactInfo
 //            text: name + ": " + number
             text: title
-            color: wrapper.ListView.isCurrentItem ? "red" : "black"
+            color: wrapper.ListView.isCurrentItem ? "white" : "black"
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: parent.left
             anchors.leftMargin: 5
@@ -23,7 +24,7 @@ Component {
             cursorShape: Qt.PointingHandCursor
             onClicked: {
                 chatList.currentIndex = index
-                chatsList.slotSelect(chatList.currentIndex)
+                chatsList.slotSelect(contactInfo.text)//chatList.currentIndex)
             }
         }
     }

@@ -108,6 +108,12 @@ void  StringListModel::slotSelect(int index)
     emit itemSelected(m_chats[index]);
 }
 
+void StringListModel::slotSelect(const QString& title)
+{
+    qDebug() << "Selected item:" << title;
+    emit itemSelected(title);
+}
+
 QString  StringListModel::getItem(int index)
 {
     if((index < 0) || (index >= m_chats.count()))

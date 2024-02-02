@@ -40,6 +40,7 @@ signals:
 
 public slots:
     void slotSelect(int index);
+    void slotSelect(const QString& title);
 protected:
     QHash<int, QByteArray> roleNames() const;
 private:

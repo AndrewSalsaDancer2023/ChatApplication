@@ -211,7 +211,8 @@ Database::chatInfo getChatParticipants(const mongocxx::database& db, const std::
     	if (msg.type() != type::k_string)
     		continue;
 
-    	result.participants.push_back(bsonArrayElementToString(msg));
+//    	result.participants.push_back(bsonArrayElementToString(msg));
+    	result.participants.insert(bsonArrayElementToString(msg));
     }
 
     result.title = chatTitle;
@@ -243,7 +244,8 @@ Database::chatInfoArray getAllChatsUserBelongsTo(const mongocxx::database& db, c
 	   {
 		   if (msg.type() != type::k_string)
 			   continue;
-		   chat.participants.push_back(bsonArrayElementToString(msg));
+//		   chat.participants.push_back(bsonArrayElementToString(msg));
+		   chat.participants.insert(bsonArrayElementToString(msg));
 	   }
 
 	   chat.title = bsonElementToString(doc["title"]);

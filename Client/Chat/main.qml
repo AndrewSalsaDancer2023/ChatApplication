@@ -30,7 +30,7 @@ Window {
                }
 
                onShowBusyIndicator: {
-                   Utils.createBusyIndicator(stackView, busyIndicator)
+                   Utils.createBusyIndicator(stackView, busyIndicator, Utils.connection)
                }
 
                onHideBusyIndicator: {
