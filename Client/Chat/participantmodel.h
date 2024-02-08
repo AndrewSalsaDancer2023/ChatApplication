@@ -48,5 +48,6 @@ protected:
     QHash<int, QByteArray> roleNames() const;
 private:
     std::weak_ptr<std::vector<Database::Participant>> participants;
+    int rowsNumber{};
 };
 

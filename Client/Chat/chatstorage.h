@@ -22,7 +22,7 @@ public:
     std::shared_ptr<messageList> getMessagesList(const std::string& title);
     void addMessagesList(const std::string& title, messageList& msgList);
     void addChatMessage(const std::string& title, Database::singleUserMessage& msg);
-
+    void deleteChat(const std::string& title);
     std::shared_ptr<participantList> getParticipants(const std::string& title);
     std::shared_ptr<participantList> copyParticipants(const std::string& title);
     std::shared_ptr<participantList> copyUsers();

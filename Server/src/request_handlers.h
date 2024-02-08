@@ -1,6 +1,7 @@
 #pragma once
 
 class websocket_session;
+
 namespace Serialize {
  class ChatMessage;
 }
@@ -19,7 +20,7 @@ void handleDeleteUserFromChat(websocket_session& session, Serialize::ChatMessage
 void handleModifyChatUsersList(websocket_session& session, Serialize::ChatMessage& msg);
 void handleGetChatsUserBelongsTo(websocket_session& session, Serialize::ChatMessage& msg);
 bool handleAddMessageToDatabase(websocket_session& session, Serialize::ChatMessage& msg);
-void translateMessageToParticipants(websocket_session& session, Serialize::ChatMessage& msg);
+void translateMessageToParticipants(websocket_session& session, const std::string& chatTitle, Serialize::ChatMessage& msg);
 void handleSendChatTapeToClient(websocket_session& session, Serialize::ChatMessage& msg);
 void handleAddMessageToChat(websocket_session& session, Serialize::ChatMessage& msg);
 void handleDeleteAllMessagesFromChat(const std::string& dbName, const std::string& chatCollName);

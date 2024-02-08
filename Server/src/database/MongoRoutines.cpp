@@ -136,6 +136,9 @@ bool deleteUsersFromChat(const mongocxx::database& db, const std::string& chatCo
 	if(!hasCollection(db, chatCollectionName))
 	        return false;
 
+	if(!deletedUsersNickNames.size())
+		return true;
+
     auto collection = db[chatCollectionName];
 
 	auto array_builder = bsoncxx::builder::basic::array{};
@@ -191,6 +194,7 @@ bool removeUserFromChat(const mongocxx::database& db, const std::string& chatCol
 Database::chatInfo getChatParticipants(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& chatTitle)
 {
 	Database::chatInfo result;
+	result.title = chatTitle;
 
 	if(!hasCollection(db, chatCollectionName))
 	       return result;
@@ -205,17 +209,16 @@ Database::chatInfo getChatParticipants(const mongocxx::database& db, const std::
 	if (participants.type() != type::k_array)
 		return result;
 
+
     bsoncxx::array::view partview{participants.get_array().value};
     for (const bsoncxx::array::element& msg : partview)
     {
     	if (msg.type() != type::k_string)
     		continue;
 
-//    	result.participants.push_back(bsonArrayElementToString(msg));
     	result.participants.insert(bsonArrayElementToString(msg));
     }
 
-    result.title = chatTitle;
 	return result;
 }
 
@@ -273,17 +276,26 @@ bsoncxx::document::value createChatDocument(const std::string& nickName, const s
 Database::chatMessagesTape getChatDocuments(const mongocxx::database& db, const std::string& dbName, const std::string& chatTitle)
 {
 	Database::chatMessagesTape result;
-    if(!hasCollection(db, chatTitle))
-        return result;
-
     result.chatTitle = chatTitle;
     result.dbName = dbName;
 
+    if(!hasCollection(db, chatTitle))
+    {
+    	std::cout << "getChatDocuments no collection:" << chatTitle << std::endl;
+        return result;
+    }
+
+    std::cout << "getChatDocuments chatTitle:" << result.chatTitle  << std::endl;
+    std::cout << "getChatDocuments dbName:" << result.dbName << std::endl;
+
     auto collection = db[chatTitle];
     auto all_documents = collection.find({});
-    std::cout << "getChatDocuments" << std::endl;
+
+    int nDocs = 0;
     for (auto& doc : all_documents)
     {
+    	nDocs++;
+    	std::cout << "getChatDocument @:" << nDocs << std::endl;
     	Database::singleUserMessage curMsg;
 
         curMsg.userNickName = bsonElementToString(doc["from"]);
@@ -319,6 +331,7 @@ bsoncxx::document::value createUserDocument(const Database::userInfo& user)
 
 bool addDocumentToCollection(const mongocxx::database& db, const std::string& collectionName, bsoncxx::document::value& document)
 {
+	std::cout << "addDocumentToCollection call" << std::endl << std::endl << std::endl;
     std::cout << "New document" << to_json(document) << std::endl << std::endl << std::endl;
     auto collection = db[collectionName];
     auto insert_one_result = collection.insert_one(std::move(document));
@@ -489,17 +502,20 @@ bool createChat(const mongocxx::database& db, const std::string& chatCollectionN
 
 bool addMessageToChat(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& nickName, const std::chrono::milliseconds& tstamp, const std::string& message)
 {
-//   Database::chatInfoArray result;
-
-   if(!hasCollection(db, chatCollectionName))
+  std::cout << std::endl << "addMessageToChat call:" << chatCollectionName << std::endl;
+ /*  if(!hasCollection(db, chatCollectionName))
+   {
+		std::cout << std::endl << "addMessageToChat no collection:" << chatCollectionName << std::endl;
        return false;
-
+   }*/
 //   auto chatRoom = db[chatCollectionName];
 
-   auto documet = createChatDocument(nickName, tstamp, message);
-   if(!addDocumentToCollection(db, chatCollectionName, documet))
+   auto document = createChatDocument(nickName, tstamp, message);
+   if(!addDocumentToCollection(db, chatCollectionName, document))
+   {
+	   std::cout << std::endl << "addMessageToChat addDocumentToCollection error:" << chatCollectionName << std::endl;
 	   return false;
-
+   }
    return true;
 }
 

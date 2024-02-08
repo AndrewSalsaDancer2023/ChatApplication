@@ -60,7 +60,7 @@ public:
 
     Q_INVOKABLE void setAuthenticationData(QString login, QString password, QString dbName);
     Q_INVOKABLE void mainWindowLoaded();
-    Q_INVOKABLE void sendChatMessage(const QString& channel, const QString& text);
+    Q_INVOKABLE void sendChatMessage(const QString& text);
     Q_INVOKABLE void setLoginScreenShown(bool shown) { loginScreenShown = shown; }
     Q_INVOKABLE void prepareUsersLists(int index);
     Q_INVOKABLE void prepareMembersList();
@@ -71,7 +71,7 @@ public:
     Q_INVOKABLE void addParticipant(const QString& nickName);
     Q_INVOKABLE void createChat(const QString& chatTitle/*, const QString& description*/);
 
-    void getChatTape(const QString& channel);
+//    void getChatTape(const QString& channel);
     void getChatTapes();
     bool isAuthorized() { return authorized; }
     void setAuthorized(bool res) { authorized = res; };
@@ -85,8 +85,9 @@ public:
 
     Q_INVOKABLE QString getCurrentChatTitle() { return curChat; }
     Q_INVOKABLE void copyChatParticipants();
+    void fillConversationModel(const std::string& item);
 private slots:
-    void onChatSelected(QString item);
+    void onChatSelected(QString chatTitle);
     void onConnectionTimeout();
 signals:
     void authSuccess();
@@ -124,8 +125,9 @@ private:
 
     void handleDeleteUsersFromChatError(Serialize::ChatMessage& msg);
     void handleAddUsersFromChatError(Serialize::ChatMessage& msg);
-//    void handleModifyChatUsersSuccess(Serialize::ChatMessage& msg);
+
     void handleUpdateChatParticipants(Serialize::ChatMessage& msg);
+    void handleDeleteUserFromChat(Serialize::ChatMessage& msg);
 
     commState state{commState::Disconnected};
     std::map<::google::protobuf::uint32, std::function<void(Serialize::ChatMessage&)> > handlers;

@@ -59,3 +59,42 @@ Database::userChatMessage decodeChatMessage(Serialize::ChatMessage& msg)
 
     return packMessage;
 }
+
+std::string createChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::set<std::string>& participants)
+{
+    Serialize::CreateChatInfo createChatRequest;
+    createChatRequest.set_dbname(dbName);
+    createChatRequest.set_collectionname(collName);
+    createChatRequest.set_chattitle(chatTitle);
+
+    for(const auto& participant: participants)
+        createChatRequest.add_participants(participant);
+
+    Serialize::ChatMessage msg;
+    msg.mutable_payload()->PackFrom(createChatRequest);
+    msg.set_payload_type_id(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_CREATE_CHAT));
+
+    std::string out;
+    if(msg.SerializeToString(&out))
+        return out;
+
+    return {};
+}
+
+std::string createRemoveUserFromChatMessage(const std::string& dbName, const std::string& chatTitle, const std::string& userNick)
+{
+	Serialize::userChatInfo info;
+	info.set_dbname(dbName);
+	info.set_chattitle(chatTitle);
+	info.set_usernickname(userNick);
+
+	Serialize::ChatMessage msg;
+	msg.mutable_payload()->PackFrom(info);
+	msg.set_payload_type_id(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_DELETE_USER_FROM_CHAT));
+
+   std::string out;
+   if(msg.SerializeToString(&out))
+       return out;
+
+   return {};
+}

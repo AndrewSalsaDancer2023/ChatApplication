@@ -92,6 +92,13 @@ message userMessage
     string userMessage = 3;
 }
 
+message userChatInfo
+{
+	string dbName = 1;
+	string chatTitle = 2;
+	string userNickname = 3;
+};
+
 message userChatMessage
 {
 	string dbName = 1;

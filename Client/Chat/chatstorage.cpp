@@ -28,6 +28,11 @@ void ChatStorage::addChatTilte(const std::string& title)
         dataModel[title] = std::make_shared<Database::chatData>();
 }
 
+void ChatStorage::deleteChat(const std::string& title)
+{
+    dataModel.erase(title);
+}
+
 std::shared_ptr<messageList> ChatStorage::getMessagesList(const std::string& title)
 {
     auto itFind = dataModel.find(title);
@@ -117,7 +122,7 @@ void ChatStorage::fillChatsInfo(const std::vector<Database::chatInfo>& chats)
 
 void ChatStorage::changeChatParticipants(const Database::chatInfo& chat)
 {
-    std::shared_ptr<participantList> partList = ChatStorage::getParticipants(chat.title);
+    std::shared_ptr<participantList> partList = getParticipants(chat.title);
     if(!partList)
         return;
 

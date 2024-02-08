@@ -18,6 +18,9 @@
 #include <string>
 #include <vector>
 
+namespace Database {
+	struct chatInfoArray;
+}
 // Forward declaration
 class shared_state;
 
@@ -42,13 +45,19 @@ public:
 
     ~websocket_session();
 
+    void addRegisteredUser(const std::string& userNickname);
+    void removeRegisteredUser();
+    void addChatsUserInfo(const Database::chatInfoArray& info);
     template<class Body, class Allocator>
     void
     run(http::request<Body, http::basic_fields<Allocator>> req);
 
+    void addUsersToChat(const std::string& dbName, const std::string& chatTitle, const std::set<std::string>& usersToAdd);
+    void updateChatUserInfo(const Database::chatInfo& info);
+    void deleteUsersFromChat(const std::string& dbName, const std::string& chatTitle, const std::set<std::string>& usersToDelete);
     // Send a message
-    void
-    send(boost::shared_ptr<std::string const> const& ss);
+    void sendChatMessageToAllParticipants(const std::string& chatTitle, const std::string& message);
+    void send(boost::shared_ptr<std::string const> const& ss);
 
 private:
     void

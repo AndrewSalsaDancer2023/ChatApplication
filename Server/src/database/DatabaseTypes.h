@@ -43,6 +43,7 @@ struct chatInfoArray
 
 struct userChatInfo
 {
+    std::string dbName;
 	std::string chatTitle;
 	std::string userNickname;
 };

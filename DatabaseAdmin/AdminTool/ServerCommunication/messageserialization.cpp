@@ -378,10 +378,12 @@ Database::userChatMessage decodeChatMessage(Serialize::ChatMessage& msg)
 
 Database::chatMessagesTape decodeMessageTapeFromChat(Serialize::ChatMessage& msg)
 {
+    Database::chatMessagesTape chatContent;
+    if(!msg.has_payload())
+        return chatContent;
+
     Serialize::chatTape chatTape;
     msg.mutable_payload()->UnpackTo(&chatTape);
-
-    Database::chatMessagesTape chatContent;
 
     chatContent.dbName = std::move(chatTape.dbname());
     chatContent.chatTitle = std::move(chatTape.chattitle());
@@ -511,6 +513,22 @@ std::optional<ADDUserToChatInfo> decodeAddChatInfo(Serialize::ChatMessage& msg)
     return ADDUserToChatInfo{ dbName, chatCollectionName, chatTitle, partcpants };
 }
 
+std::optional<Database::userChatInfo> decodeDeleteUserFromChatMessage(Serialize::ChatMessage& msg)
+{
+    if(!msg.has_payload())
+        return {};
+
+    Serialize::userChatInfo usrInfo;
+    msg.mutable_payload()->UnpackTo(&usrInfo);
+
+    Database::userChatInfo res;
+
+    res.dbName = usrInfo.dbname();
+    res.chatTitle = usrInfo.chattitle();
+    res.userNickname = usrInfo.usernickname();
+
+    return res;
+}
 
 /*
 message userMessage

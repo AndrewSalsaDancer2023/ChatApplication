@@ -36,10 +36,10 @@ void ParticipantModel::setParticipants(std::shared_ptr<std::vector<Database::Par
 {
     removeAllData();
     participants = part;
-    int nRows = numRows();
-    if(nRows > 0)
+    rowsNumber = numRows();
+    if(rowsNumber > 0)
     {
-        beginInsertRows(QModelIndex(), 0, nRows-1);
+        beginInsertRows(QModelIndex(), 0, rowsNumber-1);
         endInsertRows();
     }
 /*  QModelIndex topLeft = createIndex(0,0);
@@ -151,15 +151,15 @@ std::optional<Participant>  ParticipantModel::getParticipant(const QString& nick
 
 void ParticipantModel::removeAllData()
 {
-    //if(!m_chats.count())
-    if(!numRows())
+/*    if(!numRows())
         return;
 
-//     beginRemoveRows(QModelIndex(), 0, m_chats.count() - 1);
-     beginRemoveRows(QModelIndex(), 0, numRows() - 1);
+     beginRemoveRows(QModelIndex(), 0, numRows() - 1);*/
+    if(!rowsNumber)
+        return;
+     beginRemoveRows(QModelIndex(), 0, rowsNumber - 1);
      endRemoveRows();
      participants.reset();
-//     m_chats.clear();
 }
 
 QModelIndex ParticipantModel::createIndexForData(const Participant& part)

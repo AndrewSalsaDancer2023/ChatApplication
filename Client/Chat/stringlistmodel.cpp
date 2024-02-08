@@ -66,6 +66,9 @@ void StringListModel::addData(const std::set<std::string>& data)
 
 void StringListModel::addData(const QString& info)
 {
+    if(m_chats.contains(info))
+        return;
+
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
     m_chats << info;
     endInsertRows();

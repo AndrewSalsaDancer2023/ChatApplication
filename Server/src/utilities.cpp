@@ -142,9 +142,12 @@ std::string serializeGetChatParticipantsMessage(PayloadType type, const Database
 std::string serializeChatMessagesTape(PayloadType type, const Database::chatMessagesTape& tape)
 {
 	Serialize::chatTape chatTape;
-
+	std::cout << std::endl << "serializeChatMessagesTape" << std::endl;
 	chatTape.set_dbname(tape.dbName);
 	chatTape.set_chattitle(tape.chatTitle);
+
+	std::cout << std::endl << "tape:" << tape.dbName << std::endl;
+	std::cout << std::endl << "title:" << tape.chatTitle << std::endl;
 
 	for(const auto& message: tape.messages)
 	{

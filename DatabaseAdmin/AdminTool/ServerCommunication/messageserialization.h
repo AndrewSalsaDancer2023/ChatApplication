@@ -5,6 +5,7 @@
 enum class PayloadType : unsigned int;
 namespace Database {
 struct userInfo;
+struct userChatInfo;
 struct chatInfo;
 struct userChatMessage;
 struct chatMessagesTape;
@@ -35,3 +36,4 @@ Database::chatInfo decodeParticipantsListMessage(Serialize::ChatMessage& msg);
 std::vector<Database::chatInfo> decodeChatInfoMessages(Serialize::ChatMessage& msg);
 std::vector<Database::userInfo> decodeAllUsersMessage(Serialize::ChatMessage& msg);
 std::optional<ADDUserToChatInfo> decodeAddChatInfo(Serialize::ChatMessage& msg);
+std::optional<Database::userChatInfo> decodeDeleteUserFromChatMessage(Serialize::ChatMessage& msg);

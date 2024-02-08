@@ -13,6 +13,7 @@
 #include "utilities.h"
 #include "common_types.h"
 #include "request_handlers.h"
+#include "./database/DatabaseTypes.h"
 
 websocket_session::
 websocket_session(
@@ -28,7 +29,8 @@ websocket_session::
 ~websocket_session()
 {
     // Remove this session from the list of active sessions
-    state_->leave(this);
+//    state_->leave(this);
+    removeRegisteredUser();
 }
 
 void
@@ -59,7 +61,7 @@ on_accept(beast::error_code ec)
         return fail(ec, "accept");
 
     // Add this session to the list of active sessions
-    state_->join(this);
+  //  state_->join(this);
 
     // Read a message
     ws_.async_read(
@@ -244,14 +246,52 @@ on_write(beast::error_code ec, std::size_t)
                 shared_from_this()));
 }
 
+void websocket_session::addRegisteredUser(const std::string& userNickname)
+{
+	state_->addRegisteredUser(userNickname, this);
+}
+
+void websocket_session::removeRegisteredUser()
+{
+	state_->removeRegisteredUser(this);
+}
+
+void websocket_session::addChatsUserInfo(const Database::chatInfoArray& info)
+{
+	state_->addChatsUserInfo(info);
+}
+
+void websocket_session::sendChatMessageToAllParticipants(const std::string& chatTitle, const std::string& message)
+{
+	state_->send(chatTitle, message);
+}
+
+void websocket_session::updateChatUserInfo(const Database::chatInfo& info)
+{
+	state_->updateChatUserInfo(info);
+}
+
+void websocket_session::deleteUsersFromChat(const std::string& dbName, const std::string& chatTitle, const std::set<std::string>& usersToDelete)
+{
+	state_->deleteUsersFromChat(dbName, chatTitle, usersToDelete);
+}
+
+void websocket_session::addUsersToChat(const std::string& dbName, const std::string& chatTitle, const std::set<std::string>& usersToAdd)
+{
+	state_->addUsersToChat(dbName, chatTitle, usersToAdd);
+}
 /*
-      	    	Serialize::ChatMessage outmsg;
-  	    	outmsg.set_payload_type_id(static_cast<::google::protobuf::uint32>(PayloadType::CLIENT_AUTHENTICATION_APPROVED));
-  
-		std::string output;
-		if(outmsg.SerializeToString(&output))
-		{
-			ws_.binary(true);
-			auto const ss = boost::make_shared<std::string const>(std::move(output));
-			send(ss);
-		}*/
+ bm_type bm;
+    bm.insert( bm_type::value_type( 1, "one" ) );
+    bm.insert( bm_type::value_type( 2, "two" ) );
+    bm.insert( bm_type::value_type( 3, "three" ) );
+
+    auto right_iter = bm.right.find("three");
+    if(right_iter != bm.right.end())
+    {
+        bm.left.erase(right_iter->second);
+//        bm.right.erase(right_iter->first);
+        int k = bm.size();
+        k = 10;
+    }
+ */

@@ -9,8 +9,8 @@ SplitView {
      orientation: Qt.Horizontal
 
      function sendMessage() {
-//              chatsList.changeSampleData(channelMessage.text)
-            Coordinator.sendChatMessage(chatsList.getItem(chatList.currentItem), channelMessage.text)
+            //Coordinator.sendChatMessage(chatsList.getItem(chatList.currentItem), channelMessage.text)
+            Coordinator.sendChatMessage(channelMessage.text)
             console.log(chatList.currentItem)
          }
 
@@ -242,12 +242,12 @@ SplitView {
 //                        top: messageBlock.top
                         bottom: messageBlock.bottom
                     }
-
                     TextArea {
                         id: channelMessage
                         height: messageBlock.height - infoRow.height - 3
 //                        anchors.bottom: messageBlock.bottom
-                        text: "Sample message"
+//                        text: "Sample message"
+                        focus: true
                         width: messageBlock.width - sendButton.width - 2*messageRow.spacing
                         onTextChanged: {
                             console.log("Text has changed to:", text)
