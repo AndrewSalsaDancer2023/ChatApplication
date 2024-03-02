@@ -31,31 +31,11 @@ Coordinator::Coordinator(QObject *parent) :
          {
             handleDeleteUserFromChat(msg);
          };
-
-
 /*
-    handlers[static_cast<::google::protobuf::uint32>(PayloadType::SERVER_ADD_USER_TO_CHAT_SUCCESS)] =
+    handlers[static_cast<::google::protobuf::uint32>(PayloadType::SERVER_ADD_USER_TO_CHAT)] =
             [this](Serialize::ChatMessage& msg)
          {
-            handleAddUserToChatSuccess(msg);
-         };
-
-    handlers[static_cast<::google::protobuf::uint32>(PayloadType::SERVER_ADD_USER_TO_CHAT_ERROR)] =
-            [this](Serialize::ChatMessage& msg)
-         {
-            handleAddUserToChatError(msg);
-         };
-
-    handlers[static_cast<::google::protobuf::uint32>(PayloadType::SERVER_DELETE_USER_FROM_CHAT_SUCCESS)] =
-            [this](Serialize::ChatMessage& msg)
-         {
-            handledDeleteUserFromChatSuccess(msg);
-         };
-
-    handlers[static_cast<::google::protobuf::uint32>(PayloadType::SERVER_DELETE_USER_FROM_CHAT_ERROR)] =
-            [this](Serialize::ChatMessage& msg)
-         {
-            handledDeleteUserFromChatError(msg);
+            handleAddUserToChat(msg);
          };
 */
     handlers[static_cast<::google::protobuf::uint32>(PayloadType::SERVER_CREATE_CHAT_SUCCESS)] =
@@ -396,6 +376,14 @@ void Coordinator::handleAddUsersFromChatError(Serialize::ChatMessage& msg)
 void Coordinator::handleUpdateChatParticipants(Serialize::ChatMessage& msg)
 {
     auto res = decodeParticipantsListMessage(msg);
+    if(!chatStorage.chatExists(res.title))
+    {
+//        chatStorage.addParticipantsList(res.title, res.participants);
+        chatStorage.fillChatsInfo({res});
+        chats.addData(QString::fromStdString(res.title));
+        serverCommunicator->sendGetMessageTapeFromChat(databaseName.toStdString(), res.title, nickName.toStdString());
+        return;
+    }
     chatStorage.changeChatParticipants(res);
 
     if(curChat != QString::fromStdString(res.title))
@@ -436,14 +424,36 @@ void Coordinator::handleGetChatsUserBelongsSuccess(Serialize::ChatMessage& msg)
   members.setParticipants(chatStorage.getParticipants(curChat.toStdString()));
   onChatSelected(curChat);
   getChatTapes();
-
-//  emit changeSendButtonState();
 }
 
 void Coordinator::handleGetChatsUserBelongsError(Serialize::ChatMessage& msg)
 {
     QString message = "Unable get chats for user:" + QString::fromStdString(msg.sender());
     emit getChatsUserBelongError(message);
+}
+
+QString Coordinator::getUserName()
+{
+    auto authInfo = chatStorage.getAuthUserInfo(nickName.toStdString());
+    QString res = authInfo ? QString::fromStdString((*authInfo).name) : "";
+    return res;
+
+}
+
+QString Coordinator::getUserSurname()
+{
+    auto authInfo = chatStorage.getAuthUserInfo(nickName.toStdString());
+    QString res = authInfo ? QString::fromStdString((*authInfo).surname) : "";
+
+    return res;
+}
+
+QString Coordinator::getUserNickname()
+{
+    auto authInfo = chatStorage.getAuthUserInfo(nickName.toStdString());
+    QString res = authInfo ? QString::fromStdString((*authInfo).nickname) : "";
+
+    return res;
 }
 
 void Coordinator::setAuthenticationData(QString login, QString password, QString dbName)
@@ -456,15 +466,9 @@ void Coordinator::setAuthenticationData(QString login, QString password, QString
 
 void Coordinator::handleGetUsersInfoSuccess(Serialize::ChatMessage& msg)
 {
-/*    if(!msg.has_payload())
-        return;
-
-     Serialize::UserInfoVector elements;
-     msg.mutable_payload()->UnpackTo(&elements);
-
-    users = std::move(getUsers(elements));*/
     chatStorage.addUsers(decodeAllUsersMessage(msg));
     sendGetChatsContainUserMessage(databaseName, roomsCollName, nickName);
+    emit usersListObtained();
 }
 
 void Coordinator::handleGetUsersInfoError(Serialize::ChatMessage& msg)
@@ -503,7 +507,7 @@ void Coordinator::handleGetMessageTapeFromChat(Serialize::ChatMessage& msg)
 
 void Coordinator::handleDeleteUserFromChat(Serialize::ChatMessage& msg)
 {
-    auto usrInfo = decodeDeleteUserFromChatMessage(msg);
+    auto usrInfo = decodeModifyParticipantsChatMessage(msg);
     if(!usrInfo)
         return;
     if(databaseName.toStdString() != (*usrInfo).dbName)
@@ -515,7 +519,21 @@ void Coordinator::handleDeleteUserFromChat(Serialize::ChatMessage& msg)
     if(chats.rowCount() > 0)
         onChatSelected(chats.getItem(0));
 }
+/*
+void Coordinator::handleAddUserToChat(Serialize::ChatMessage& msg)
+{
+    auto usrInfo = decodeModifyParticipantsChatMessage(msg);
+    if(!usrInfo)
+        return;
+    if(databaseName.toStdString() != (*usrInfo).dbName)
+        return;
+    auto title = QString::fromStdString((*usrInfo).chatTitle);
+    serverCommunicator->sendGetMessageTapeFromChat(databaseName.toStdString(), title.toStdString(), nickName.toStdString());
 
+    chats.addData(title);
+    int k = 10;
+}
+*/
 void Coordinator::handleGetMessageTapeFromChatError(Serialize::ChatMessage& msg)
 {
     const std::string& reason = msg.sender();

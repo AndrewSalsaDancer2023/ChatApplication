@@ -4,7 +4,6 @@
         <file>ChatView.qml</file>
         <file>LoginForm.qml</file>
         <file>MessageBox.qml</file>
-        <file>ContactModel.qml</file>
         <file>ChatListItem.qml</file>
         <file>ConversationItem.qml</file>
         <file>profileImage.png</file>
@@ -12,11 +11,11 @@
         <file>AddChannelForm.qml</file>
         <file>AddParticipantsForm.qml</file>
         <file>ParticipantItem.qml</file>
-        <file>UsersModel.qml</file>
         <file>MemberItem.qml</file>
-        <file>ParticipantListItem.qml</file>
         <file>BusyIndicator.qml</file>
         <file>uiutilities.js</file>
         <file>ParticipantList.qml</file>
+        <file>ParticipantListItem.qml</file>
+        <file>SettingsView.qml</file>
     </qresource>
 </RCC>

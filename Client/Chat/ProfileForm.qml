@@ -6,6 +6,16 @@ import Authentication 1.0
 Rectangle {
     anchors.fill: parent
     color: "grey"
+Column {
+    anchors.fill: parent
+
+    Text {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: 20
+        font.pixelSize: 20
+        text: "User profile"
+    }
 Item {
     width: 200
     height: 200
@@ -24,7 +34,7 @@ Item {
         TextField {
             id: name
 //            placeholderText: "name"
-            text: "name"
+            text: { Coordinator.getUserName() }
             focus: true
         }
 
@@ -34,9 +44,9 @@ Item {
         }
         TextField {
             id: surname
-            placeholderText: "surname"
+            placeholderText: { Coordinator.getUserSurname() }
         }
-
+/*
         Text {
             font.pixelSize: 20
             text: "email"
@@ -45,7 +55,7 @@ Item {
             id: email
             placeholderText: "email"
         }
-
+*/
         Text {
             font.pixelSize: 20
             text: "nickname"
@@ -62,7 +72,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
                 anchors.leftMargin: 5
-                text: "nickname"
+                text: { Coordinator.getUserNickname() }
             }
         }
     }
@@ -70,9 +80,11 @@ Item {
         anchors.horizontalCenter: profileInfo.horizontalCenter
         anchors.top: profileInfo.bottom
         anchors.topMargin: 10
-        spacing: 15
+/*        spacing: 15
              Button { text: "Submit"; onClicked: console.log("submit") }
-             Button { text: "Cancel"; onClicked: console.log("cancellation") }
+             Button { text: "Cancel"; onClicked: console.log("cancellation") }*/
+         Button { text: "Ok"; onClicked: { stackView.pop() } }
    }
+}
 }
 }

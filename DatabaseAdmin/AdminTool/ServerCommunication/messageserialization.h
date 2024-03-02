@@ -36,4 +36,4 @@ Database::chatInfo decodeParticipantsListMessage(Serialize::ChatMessage& msg);
 std::vector<Database::chatInfo> decodeChatInfoMessages(Serialize::ChatMessage& msg);
 std::vector<Database::userInfo> decodeAllUsersMessage(Serialize::ChatMessage& msg);
 std::optional<ADDUserToChatInfo> decodeAddChatInfo(Serialize::ChatMessage& msg);
-std::optional<Database::userChatInfo> decodeDeleteUserFromChatMessage(Serialize::ChatMessage& msg);
+std::optional<Database::userChatInfo> decodeModifyParticipantsChatMessage(Serialize::ChatMessage& msg);

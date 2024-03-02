@@ -166,13 +166,15 @@ try{
     		{
     			handleSendChatTapeToClient(*this, msg);
     		}
-
+/*
  else 
  {
-//    state_->send(beast::buffers_to_string(buffer_.data()));
+
    std::cout << "other sending string: " << resvdData << std::endl;
     state_->send(resvdData);
+
 }
+*/
     // Clear the buffer
     buffer_.consume(buffer_.size());
 }

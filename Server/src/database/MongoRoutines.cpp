@@ -193,6 +193,7 @@ bool removeUserFromChat(const mongocxx::database& db, const std::string& chatCol
 
 Database::chatInfo getChatParticipants(const mongocxx::database& db, const std::string& chatCollectionName, const std::string& chatTitle)
 {
+	std::cout << "getChatParticipants" << std::endl;
 	Database::chatInfo result;
 	result.title = chatTitle;
 

@@ -35,6 +35,7 @@ public:
     void addUsers(std::vector<Database::userInfo> usrs) { users = std::move(usrs); }
     const usersList& getUsers() { return users; }
     bool chatExists(const std::string& title);
+    std::optional<Database::userInfo> getAuthUserInfo(const std::string& nickname);
 private:
     void addChatTilte(const std::string& title);
 

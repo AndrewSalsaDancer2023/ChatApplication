@@ -513,7 +513,7 @@ std::optional<ADDUserToChatInfo> decodeAddChatInfo(Serialize::ChatMessage& msg)
     return ADDUserToChatInfo{ dbName, chatCollectionName, chatTitle, partcpants };
 }
 
-std::optional<Database::userChatInfo> decodeDeleteUserFromChatMessage(Serialize::ChatMessage& msg)
+std::optional<Database::userChatInfo> decodeModifyParticipantsChatMessage(Serialize::ChatMessage& msg)
 {
     if(!msg.has_payload())
         return {};

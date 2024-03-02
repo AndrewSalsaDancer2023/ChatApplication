@@ -43,6 +43,49 @@ void f(T v)
 //https://techoverflow.net/2023/07/31/how-to-convert-stdchronotime_point-to-seconds-since-epoch/
 //https://qna.habr.com/q/1007635
 
+#include <map>
+#include <unordered_map>
+
+using namespace std;
+
+// Function to print all subarrays with a zero-sum in a given array
+void printAllSubarrays(int nums[], int n)
+{
+    // create an empty multimap to store the ending index of all
+    // subarrays having the same sum
+    unordered_multimap<int, int> map;
+
+    // insert (0, -1) pair into the map to handle the case when
+    // subarray with zero-sum starts from index 0
+    map.insert(pair<int, int>(0, -1));
+
+    int sum = 0;
+
+    // traverse the given array
+    for (int i = 0; i < n; i++)
+    {
+        // sum of elements so far
+        sum += nums[i];
+
+        // if the sum is seen before, there exists at least one
+        // subarray with zero-sum
+        if (map.find(sum) != map.end())
+        {
+            auto it = map.find(sum);
+
+            // find all subarrays with the same sum
+            while (it != map.end() && it->first == sum)
+            {
+                cout << "Subarray [" << it->second + 1 << "…" << i << "]\n";
+                it++;
+            }
+        }
+
+        // insert (sum so far, current index) pair into multimap
+        map.insert(pair<int, int>(sum, i));
+    }
+}
+
 int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -52,6 +95,31 @@ int main(int argc, char *argv[])
 
 //    qmlRegisterType<Coordinator>("Coordinator", 1, 0, "Coordinator");
 //    qmlRegisterType<ChatListModel>("ChatListModel", 1, 0, "chatsList");
+
+    ///////////////////////////////////////////////////////////
+
+    int nums[] = { 3, 4, -7, 3, 1, 3, 1, -4, -2, -2 };
+    int n = sizeof(nums)/sizeof(nums[0]);
+
+     printAllSubarrays(nums, n);
+/*
+    std::multimap<int, int> map;
+
+    map.insert(std::pair<int, int>(0, -1));
+    map.insert(std::pair<int, int>(0, 1));
+    map.insert(std::pair<int, int>(0, 2));
+    map.insert(std::pair<int, int>(0, 3));
+    map.insert(std::pair<int, int>(0, 4));
+
+    auto it = map.find(0);
+    while (it != map.end())
+    {
+        std::cout << "Subarray [" << it->second + 1 << "]\n";
+        it++;
+    }
+*/
+    int k = 10;
+    ///////////////////////////////////////////////////////////
     QQmlApplicationEngine engine;
     Coordinator coord;
     QQmlContext *ctxt = engine.rootContext();

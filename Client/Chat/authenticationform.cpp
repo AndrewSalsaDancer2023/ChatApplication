@@ -33,7 +33,7 @@ void AuthenticationForm::setPassword(QString newPassword)
     m_password = newPassword;
     emit passwordChanged();
 }
-
+/*
 QString AuthenticationForm::getErrorLoginMessage()
 {
    return QString{"login error!"};
@@ -44,3 +44,4 @@ QString AuthenticationForm::getErrorPasswordMessage()
 {
     return {"password error!"};
 }
+*/

@@ -69,7 +69,11 @@ public:
     Q_INVOKABLE void modifyChatParticipants(const QString& chat);
     Q_INVOKABLE void removeParticipant(const QString& nickName);
     Q_INVOKABLE void addParticipant(const QString& nickName);
-    Q_INVOKABLE void createChat(const QString& chatTitle/*, const QString& description*/);
+    Q_INVOKABLE void createChat(const QString& chatTitle);
+
+    Q_INVOKABLE QString getUserName();
+    Q_INVOKABLE QString getUserSurname();
+    Q_INVOKABLE QString getUserNickname();
 
 //    void getChatTape(const QString& channel);
     void getChatTapes();
@@ -106,6 +110,7 @@ signals:
     void hideBusyIndicator();
 
     void scrollListToTheEnd();
+    void usersListObtained();
 private:
     void handleAuthenticationSuccess(Serialize::ChatMessage& msg);
     void handleAuthenticationError(Serialize::ChatMessage& msg);
@@ -128,6 +133,7 @@ private:
 
     void handleUpdateChatParticipants(Serialize::ChatMessage& msg);
     void handleDeleteUserFromChat(Serialize::ChatMessage& msg);
+//    void handleAddUserToChat(Serialize::ChatMessage& msg);
 
     commState state{commState::Disconnected};
     std::map<::google::protobuf::uint32, std::function<void(Serialize::ChatMessage&)> > handlers;

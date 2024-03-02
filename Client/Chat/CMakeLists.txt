@@ -38,6 +38,9 @@ else()
       main.cpp
       authenticationform.h
       authenticationform.cpp
+      profiledata.h
+      profiledata.cpp
+      authenticationform.cpp
       stringlistmodel.h
       stringlistmodel.cpp
       conversationmodel.h

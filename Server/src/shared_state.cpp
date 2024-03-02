@@ -10,14 +10,10 @@
 #include "websocket_session.hpp"
 #include "./database/DatabaseTypes.h"
 #include "messageserialization.h"
+#include "common_types.h"
 
-shared_state::
-/*shared_state(std::string doc_root)
-    : doc_root_(std::move(doc_root))*/
-shared_state()
-{
-}
-
+shared_state::shared_state(){}
+/*
 void
 shared_state::
 join(websocket_session* session)
@@ -35,19 +31,16 @@ leave(websocket_session* session)
     std::lock_guard<std::mutex> lock(mutex_);
     sessions_.erase(session);
 }
-
+*/
 // Broadcast a message to all websocket client sessions
+/*
 void
 shared_state::
 send(std::string message)
 {
 	std::cout << "shared_state::send message" << message << std::endl;
-    // Put the message in a shared pointer so we can re-use it for each client
     auto const ss = boost::make_shared<std::string const>(std::move(message));
 
-    // Make a local list of all the weak pointers representing
-    // the sessions, so we can do the actual sending without
-    // holding the mutex:
     std::vector<boost::weak_ptr<websocket_session>> v;
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -56,27 +49,71 @@ send(std::string message)
             v.emplace_back(p->weak_from_this());
     }
 
-    // For each session in our local list, try to acquire a strong
-    // pointer. If successful, then send the message on that session.
     for(auto const& wp : v)
         if(auto sp = wp.lock())
             sp->send(ss);
+}
+*/
+
+activeUserSessions shared_state::getActiveSessions(const std::set<std::string>& usersToAdd)
+{
+	activeUserSessions v;
+	v.reserve(userSessionMap.size());
+
+	std::lock_guard<std::mutex> lock(session_mutex);
+	for(const auto& user : usersToAdd)
+	{
+		auto left_iter = userSessionMap.left.find(user);
+		if(left_iter == userSessionMap.left.end())
+			continue;
+
+		v.emplace_back(left_iter->second->weak_from_this());
+	}
+	return v;
+}
+
+void shared_state::sendMessageToActiveSessions(const activeUserSessions& sessions, boost::shared_ptr<std::string const> const& message)
+{
+    for(auto const& session : sessions)
+    {
+    	if(auto sp = session.lock())
+    		sp->send(message);
+    }
+}
+
+std::set<std::string> shared_state::getChatParticipants(const std::string& chatTitle)
+{
+	std::cout << "shared_state::getChatParticipants chat " << chatTitle << std::endl;
+	std::lock_guard<std::mutex> lock(chat_mutex);
+
+	auto itFind = chatUsersMap.find(chatTitle);
+	if(itFind == chatUsersMap.end())
+		return {};
+
+	return itFind->second;
 }
 
 void shared_state::send(const std::string& chatTitle, std::string message)
 {
 	std::cout << "shared_state::send message" << message << std::endl;
-	// Put the message in a shared pointer so we can re-use it for each client
-	auto const ss = boost::make_shared<std::string const>(std::move(message));
 
 
+/*
 	auto itFind = channelUsersMap.find(chatTitle);
 	if(itFind == channelUsersMap.end())
 		return;
+*/
+	 auto participants = getChatParticipants(chatTitle);
+	 auto sessions = getActiveSessions(participants);
 
+	 // Put the message in a shared pointer so we can re-use it for each client
+	 auto const sharedmessage = boost::make_shared<std::string const>(std::move(message));
+
+	 sendMessageToActiveSessions(sessions, sharedmessage);
 	// Make a local list of all the weak pointers representing
 	// the sessions, so we can do the actual sending without
 	// holding the mutex:
+/*
 	std::vector<boost::weak_ptr<websocket_session>> v;
 	{
 		std::lock_guard<std::mutex> lock(mutex_);
@@ -94,12 +131,13 @@ void shared_state::send(const std::string& chatTitle, std::string message)
 			v.emplace_back(pSession->weak_from_this());
 		}
 	}
-
+*/
 	// For each session in our local list, try to acquire a strong
 	// pointer. If successful, then send the message on that session.
-	for(auto const& wp : v)
+/*	for(auto const& wp : v)
 		if(auto sp = wp.lock())
 			sp->send(ss);
+*/
 }
 
 void shared_state::addRegisteredUser(const std::string& userNickname, websocket_session* session)
@@ -108,39 +146,37 @@ void shared_state::addRegisteredUser(const std::string& userNickname, websocket_
 		return;
 	std::cout << "addRegisteredUser:" << userNickname << std::endl;
 //	bm.insert( bm_type::value_type( 1, "one" ) );
-	userSessionMap.insert( bm_type::value_type( userNickname, session ) );//[userNickname] = session;
+	std::lock_guard<std::mutex> lock(session_mutex);
+	userSessionMap.insert( bm_type::value_type( userNickname, session ) );
 }
 
 void shared_state::deleteUsersFromChat(const std::string& dbName, const std::string& chatTitle, const std::set<std::string>& usersToDelete)
 {
-	for(const auto& user : usersToDelete)
-	{
-	    auto left_iter = userSessionMap.left.find(user);
-	    if(left_iter == userSessionMap.left.end())
-	    		continue;
+	std::cout << "shared_state::deleteUsersFromChat" << std::endl;
+	if(!usersToDelete.empty())
+		std::cout << "deleteUsersFromChat::user:" << *usersToDelete.cbegin() << std::endl;
 
-	    auto const ss = boost::make_shared<std::string const>(std::move(createRemoveUserFromChatMessage(dbName, chatTitle, user)));
-	    websocket_session* pSession = left_iter->second;
-	    pSession->send(ss);
-	}
+	activeUserSessions sessions = getActiveSessions(usersToDelete);
+	deleteUserNickFromChatInfo(chatTitle, usersToDelete);
+	auto const sharedmessage = boost::make_shared<std::string const>(std::move(createModifyChatParticipantsMessage(dbName, chatTitle, PayloadType::SERVER_DELETE_USER_FROM_CHAT)));
+	sendMessageToActiveSessions(sessions, sharedmessage);
 }
 
 void shared_state::addUsersToChat(const std::string& dbName, const std::string& chatTitle, const std::set<std::string>& usersToAdd)
 {
-	for(const auto& user : usersToAdd)
-	{
-	    auto left_iter = userSessionMap.left.find(user);
-	    if(left_iter == userSessionMap.left.end())
-	    		continue;
+	std::cout << "shared_state::addUsersToChat" << std::endl;
+		if(!usersToAdd.empty())
+			std::cout << "addUsersToChat::user:" << *usersToAdd.cbegin() << std::endl;
 
-	    auto const ss = boost::make_shared<std::string const>(std::move(createChatMessage(dbName, "", chatTitle, usersToAdd)));
-	    websocket_session* pSession = left_iter->second;
-	    pSession->send(ss);
-	}
+	activeUserSessions sessions = getActiveSessions(usersToAdd);
+	addUserNickToChatInfo(chatTitle, usersToAdd);
+//	auto const message = boost::make_shared<std::string const>(std::move(createModifyChatParticipantsMessage(dbName, chatTitle, PayloadType::SERVER_ADD_USER_TO_CHAT)));
+//	sendMessageToActiveSessions(sessions, message);
 }
 
 void shared_state::removeRegisteredUser(websocket_session* session)
 {
+	std::lock_guard<std::mutex> lock(session_mutex);
 	auto right_iter = userSessionMap.right.find(session);
 	if(right_iter == userSessionMap.right.end())
 		return;
@@ -152,17 +188,41 @@ void shared_state::removeRegisteredUser(websocket_session* session)
 
 void shared_state::addChatsUserInfo(const Database::chatInfoArray& info)
 {
+	std::lock_guard<std::mutex> lock(chat_mutex);
 	for(const auto& chatInfo: info.chats)
 	{
-		if(channelUsersMap.find(chatInfo.title) == channelUsersMap.end())
-			channelUsersMap[chatInfo.title] = chatInfo.participants;
+		if(chatUsersMap.find(chatInfo.title) == chatUsersMap.end())
+			chatUsersMap[chatInfo.title] = chatInfo.participants;
 	}
+}
+
+void shared_state::addUserNickToChatInfo(const std::string& chatTitle, const std::set<std::string>& usersToAdd)
+{
+	auto it = chatUsersMap.find(chatTitle);
+	if(it == chatUsersMap.end())
+		return;
+
+	for(const auto& userNickName: usersToAdd)
+		it->second.insert(userNickName);
+}
+
+void shared_state::deleteUserNickFromChatInfo(const std::string& chatTitle, const std::set<std::string>& usersToDelete)
+{
+	std::lock_guard<std::mutex> lock(chat_mutex);
+
+	auto it = chatUsersMap.find(chatTitle);
+	if(it == chatUsersMap.end())
+		return;
+
+	for(const auto& userNickName: usersToDelete)
+		it->second.erase(userNickName);
 }
 
 void shared_state::updateChatUserInfo(const Database::chatInfo& info)
 {
-	auto itFind = channelUsersMap.find(info.title);
-	if(itFind == channelUsersMap.end())
+	std::lock_guard<std::mutex> lock(chat_mutex);
+	auto itFind = chatUsersMap.find(info.title);
+	if(itFind == chatUsersMap.end())
 		return;
 	itFind->second  = info.participants;
 }

@@ -14,19 +14,15 @@ public:
     explicit AuthenticationForm(QObject *parent = nullptr);
     QString login();
     QString password();
-//    Q_INVOKABLE bool isLoginCorrect(QString login);{return false;}
-//    Q_INVOKABLE bool isPasswordCorrect(QString password); {return false;}
-//    Q_INVOKABLE void setAuthenticationData(QString login, QString password, QString dbName);
-
+/*
     Q_INVOKABLE QString getErrorLoginMessage();
     Q_INVOKABLE QString getErrorPasswordMessage();
-
+*/
 signals:
     void loginChanged();
     void passwordChanged();
 
 public slots:
-//    void callMe();
     void setLogin(QString);
     void setPassword(QString);
 

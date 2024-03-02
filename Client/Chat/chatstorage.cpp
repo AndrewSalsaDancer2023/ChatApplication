@@ -134,11 +134,20 @@ void ChatStorage::changeChatParticipants(const Database::chatInfo& chat)
     }
 }
 
-
-
-
 void ChatStorage::addChatParticipant(const std::string& title, Database::Participant& participant)
 {
     addChatTilte(title);
     dataModel[title]->participants.push_back(std::move(participant));
+}
+
+std::optional<Database::userInfo> ChatStorage::getAuthUserInfo(const std::string& nickname)
+{
+    auto it = std::find_if(users.begin(), users.end(),[&nickname](const auto& usrInfo){
+        return usrInfo.nickname == nickname;
+    });
+
+    if(it == users.end())
+        return {};
+
+    return *it;
 }

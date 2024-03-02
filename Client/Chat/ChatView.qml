@@ -45,6 +45,11 @@ SplitView {
             console.log("onScrollListToTheEnd")
             conversationList.positionViewAtEnd()
         }
+
+        onUsersListObtained : {
+            userCaption.text = qsTr("Name:") + Coordinator.getUserName()
+            userName.text =  qsTr("Surname:") + Coordinator.getUserSurname()
+        }
     }
 
     function changeSendButtonState(chatsListNotEmpty, chatMsgSize)
@@ -85,6 +90,26 @@ SplitView {
             id: mainMenu
             anchors.fill: parent
             spacing: 4
+            Column {
+                spacing: 4
+                Text {
+                    id: userCaption
+                    text: { qsTr("Name:") + Coordinator.getUserName() }
+                }
+                Text {
+                    id: userName
+                    text: { qsTr("Surname:") + Coordinator.getUserSurname() }
+                }
+            }
+            Button {
+                id: userDataButton
+                width: parent.width
+                text: "Profile"
+                onClicked: {
+//                    Coordinator.prepareMembersList()
+                    stackView.push("qrc:/ProfileForm.qml")
+                }
+            }
              Button {
                  id: channelsButton
                  width: parent.width
@@ -100,14 +125,31 @@ SplitView {
                  text: "Change members"
                  onClicked:  {
                    Coordinator.prepareUsersLists(chatList.currentIndex)
-//                     chatsList.getItem(chatList.currentIndex).
                      stackView.push("qrc:/AddParticipantsForm.qml")
+                 }
+             }
+             Button {
+                 id: settingsButton
+                 width: parent.width
+                 text: "Settings"
+                 onClicked:  {
+                     stackView.push("qrc:/SettingsView.qml")
+                 }
+             }
+             Button {
+                 id: leaveButton
+                 width: parent.width
+                 text: "Leave channel"
+//                 enabled:
+                 onClicked:  {
+//                   Coordinator.prepareUsersLists(chatList.currentIndex)
+//                     stackView.push("qrc:/AddParticipantsForm.qml")
                  }
              }
              Text {
                  id: channelsTitle
-                 font.pixelSize: 20
-                 color: "#F69678"
+//                 font.pixelSize: 20
+//                 color: "#F69678"
                  text: "Channels"
                }
              ListView {

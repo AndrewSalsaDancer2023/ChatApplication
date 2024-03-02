@@ -25,23 +25,24 @@ namespace Database {
 // Forward declaration
 class websocket_session;
 
+using activeUserSessions = std::vector<boost::weak_ptr<websocket_session>>;
 // Represents the shared server state
 class shared_state
 {
     // This mutex synchronizes all access to sessions_
-    std::mutex mutex_;
+    std::mutex session_mutex;
+    std::mutex chat_mutex;
 
     using bm_type = boost::bimap< std::string, websocket_session* >;
     // Keep a list of all the connected clients
-    std::unordered_set<websocket_session*> sessions_;
-    std::unordered_map<std::string, std::set<std::string>> channelUsersMap;// channel to user relation
+    std::unordered_map<std::string, std::set<std::string>> chatUsersMap;// channel to user relation
     bm_type userSessionMap; //user to session relation
 public:
     shared_state();
 
-    void join(websocket_session* session);
-    void leave(websocket_session* session);
-    void send(std::string message);
+//    void join(websocket_session* session);
+//    void leave(websocket_session* session);
+//    void send(std::string message);
     void send(const std::string& chatTitle, std::string message);
 
     void addRegisteredUser(const std::string& userNickname, websocket_session* session);
@@ -50,6 +51,12 @@ public:
     void updateChatUserInfo(const Database::chatInfo& info);
     void addUsersToChat(const std::string& dbName, const std::string& chatTitle, const std::set<std::string>& usersToAdd);
     void deleteUsersFromChat(const std::string& dbName, const std::string& chatTitle, const std::set<std::string>& usersToDelete);
+private:
+    activeUserSessions getActiveSessions(const std::set<std::string>& usersToAdd);
+    void sendMessageToActiveSessions(const activeUserSessions& sessions, boost::shared_ptr<std::string const> const& message);
+    std::set<std::string> getChatParticipants(const std::string& chatTitle);
+    void addUserNickToChatInfo(const std::string& chatTitle, const std::set<std::string>& usersToAdd);
+    void deleteUserNickFromChatInfo(const std::string& chatTitle, const std::set<std::string>& usersToDelete);
 };
 
 #endif

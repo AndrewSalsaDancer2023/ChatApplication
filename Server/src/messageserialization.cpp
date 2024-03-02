@@ -81,16 +81,17 @@ std::string createChatMessage(const std::string& dbName, const std::string& coll
     return {};
 }
 
-std::string createRemoveUserFromChatMessage(const std::string& dbName, const std::string& chatTitle, const std::string& userNick)
+std::string createModifyChatParticipantsMessage(const std::string& dbName, const std::string& chatTitle, PayloadType msgType)
 {
 	Serialize::userChatInfo info;
 	info.set_dbname(dbName);
 	info.set_chattitle(chatTitle);
-	info.set_usernickname(userNick);
+//	info.set_usernickname(userNick);
 
 	Serialize::ChatMessage msg;
 	msg.mutable_payload()->PackFrom(info);
-	msg.set_payload_type_id(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_DELETE_USER_FROM_CHAT));
+//	msg.set_payload_type_id(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_DELETE_USER_FROM_CHAT));
+	msg.set_payload_type_id(static_cast<::google::protobuf::uint32>(msgType));
 
    std::string out;
    if(msg.SerializeToString(&out))
