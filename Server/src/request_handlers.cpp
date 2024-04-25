@@ -331,6 +331,40 @@ void updateGetChatParticipants(const std::string& dbName, const std::string& cha
 	session.sendChatMessageToAllParticipants(chatTitle, result);
 }
 
+void handleLeaveUserFromChat(websocket_session& session, Serialize::ChatMessage& msg)
+{
+	if(!msg.has_payload())
+				return;
+
+	const auto& [dbName, chatCollectionName,
+				 chatTitle, userToDelete] = extractLeaveUserFromChatInfo(msg);
+
+	auto &dbInstance =  DatabaseDriver::instance();
+
+	std::string result;
+	if(userToDelete.empty())
+	{
+//		result = serializeNoPayloadMessage(PayloadType::SERVER_LEAVE_USER_FROM_CHAT_ERROR, chatTitle);
+		result = createLeaveFromChatMessage(static_cast<unsigned int>(PayloadType::SERVER_LEAVE_USER_FROM_CHAT_ERROR), dbName, chatCollectionName, chatTitle, userToDelete);
+		auto const ss = boost::make_shared<std::string const>(std::move(result));
+		session.send(ss);
+	}
+//	else
+	if(!dbInstance.deleteUsersFromChat(dbName, chatCollectionName, chatTitle, {userToDelete}))
+	{
+//		result = serializeNoPayloadMessage(PayloadType::SERVER_LEAVE_USER_FROM_CHAT_ERROR, chatTitle);
+		result = createLeaveFromChatMessage(static_cast<unsigned int>(PayloadType::SERVER_LEAVE_USER_FROM_CHAT_ERROR), dbName, chatCollectionName, chatTitle, userToDelete);
+		auto const ss = boost::make_shared<std::string const>(std::move(result));
+		session.send(ss);
+		std::cout << "handleModifyChatUsersList:SERVER_LEAVE_USER_FROM_CHAT_ERROR" << std::endl;
+		return;
+	}
+	session.deleteUsersFromChat(dbName, chatTitle, {userToDelete});
+
+	result = createLeaveFromChatMessage(static_cast<unsigned int>(PayloadType::SERVER_LEAVE_USER_FROM_CHAT_SUCCESS), dbName, chatCollectionName, chatTitle, userToDelete);
+	session.sendChatMessageToAllParticipants(chatTitle, result);
+}
+
 void handleModifyChatUsersList(websocket_session& session, Serialize::ChatMessage& msg)
 {
 	if(!msg.has_payload())

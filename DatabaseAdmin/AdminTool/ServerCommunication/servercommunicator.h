@@ -38,6 +38,7 @@ public:
     void sendGetMessageTapeFromChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName);
     void sendModifyChatParticipantsMessage(const std::string& dbName, const std::string&  collName, const std::string&  chatTitle, std::set<std::string>& delUsrs, std::set<std::string>& addUsrs);
     void connectToHost();
+    void sendLeaveFromChatMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string& chatTitle, const std::string& nickName);
 signals:
 
 public slots:

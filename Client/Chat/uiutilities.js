@@ -39,20 +39,22 @@ var authenticate = "Authentication..."
 
 //var examplShortChatDescr = String.format('{0} is dead, but {1} is alive! {0} {2}', 'ASP', 'ASP.NET');
 
-function createBusyIndicator(root, indicator, message)
+function createBusyIndicator(root, message)
 {
-    if(indicator === null) {
+        console.log("Show busy form!")
         var component = Qt.createComponent("BusyIndicator.qml")
-        indicator = component.createObject(root, {"x" : 0, "y" : 0})
+        var indicator = component.createObject(root, {"x" : 0, "y" : 0})
         if(indicator !== null) {
             indicator.anchors.centerIn = root
             indicator.waitingMessage = message
+            return indicator;
         }
-    }
+        return null;
 }
 
 function destroyBusyIndocator(indicator) {
     if(indicator !== null) {
+        console.log("Destroy busy form!")
         indicator.destroy()
         indicator = null
     }

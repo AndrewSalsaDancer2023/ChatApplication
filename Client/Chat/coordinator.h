@@ -64,6 +64,7 @@ public:
     Q_INVOKABLE void setLoginScreenShown(bool shown) { loginScreenShown = shown; }
     Q_INVOKABLE void prepareUsersLists(int index);
     Q_INVOKABLE void prepareMembersList();
+    Q_INVOKABLE void leaveFromChat();
 
     Q_INVOKABLE bool hasCorrectChatParticipants();
     Q_INVOKABLE void modifyChatParticipants(const QString& chat);
@@ -133,6 +134,8 @@ private:
 
     void handleUpdateChatParticipants(Serialize::ChatMessage& msg);
     void handleDeleteUserFromChat(Serialize::ChatMessage& msg);
+    void handleLeaveUserFromChat(Serialize::ChatMessage& msg);
+    void handleLeaveUserFromChatError(Serialize::ChatMessage& msg);
 //    void handleAddUserToChat(Serialize::ChatMessage& msg);
 
     commState state{commState::Disconnected};

@@ -135,3 +135,9 @@ void ServerCommunicator::sendModifyChatParticipantsMessage(const std::string& db
     std::string res = createModifyChatParticipantsMessage(dbName, collName, chatTitle, delUsrs, addUsrs);
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
 }
+
+void ServerCommunicator::sendLeaveFromChatMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string& chatTitle, const std::string& nickName)
+{
+    std::string res = createLeaveFromChatMessage(dbName, chatCollectionName, chatTitle, nickName);
+    m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
+}

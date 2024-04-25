@@ -74,6 +74,14 @@ message ModifyUsersChatInfo
 	repeated string usersToAdd = 5;
 }
 
+message LeaveUserFromChatInfo
+{
+	string dbName = 1;
+	string collectionName = 2;
+	string chatTitle = 3;
+	string userToDelete = 4;
+}
+
 message chatInfo
 {
 	string title = 1;

@@ -352,6 +352,28 @@ std::string createGetChatTapeMessage(const std::string& dbName, const std::strin
     return {};
 }
 
+std::string createLeaveFromChatMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string&  chatTitle, const std::string&  nickName)
+{
+    Serialize::LeaveUserFromChatInfo leaveUsrMsg;
+
+    leaveUsrMsg.set_dbname(dbName);
+    leaveUsrMsg.set_collectionname(chatCollectionName);
+    leaveUsrMsg.set_chattitle(chatTitle);
+
+    leaveUsrMsg.set_usertodelete(std::move(nickName));
+
+    Serialize::ChatMessage msg;
+    msg.mutable_payload()->PackFrom(leaveUsrMsg);
+    msg.set_payload_type_id(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_LEAVE_USER_FROM_CHAT));
+
+    std::string out;
+    if(msg.SerializeToString(&out))
+        return out;
+
+    return {};
+}
+
+
 Database::userChatMessage decodeChatMessage(Serialize::ChatMessage& msg)
 {
     Serialize::userChatMessage userChatMessage;
@@ -528,6 +550,23 @@ std::optional<Database::userChatInfo> decodeModifyParticipantsChatMessage(Serial
     res.userNickname = usrInfo.usernickname();
 
     return res;
+}
+
+LeaveUserFromChatInfo decodeLeaveUserFromChatInfo(Serialize::ChatMessage& msg)
+{
+    Serialize::LeaveUserFromChatInfo leaveUsrFromChatRequest;
+    msg.mutable_payload()->UnpackTo(&leaveUsrFromChatRequest);
+
+    auto dbName = std::move(leaveUsrFromChatRequest.dbname());
+    std::cout << "db:" << dbName << std::endl;
+    auto chatCollectionName = std::move(leaveUsrFromChatRequest.collectionname());
+    std::cout << "chatCollectionName:" << chatCollectionName << std::endl;
+    auto chatTitle = std::move(leaveUsrFromChatRequest.chattitle());
+
+    auto userToLeave = std::move(leaveUsrFromChatRequest.usertodelete());
+
+
+    return { dbName, chatCollectionName, chatTitle, userToLeave };
 }
 
 /*

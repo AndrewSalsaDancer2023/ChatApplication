@@ -30,21 +30,21 @@ Window {
                }
 
                onShowBusyIndicator: {
-                   Utils.createBusyIndicator(stackView, busyIndicator, Utils.connection)
+                   if(busyIndicator !== null)
+                        return;
+
+                   busyIndicator = stackView.push("qrc:/BusyIndicator.qml")
+                   busyIndicator.waitingMessage = Utils.connection
                }
 
                onHideBusyIndicator: {
-                   Utils.destroyBusyIndocator()
+                   if(busyIndicator !== null)
+                       stackView.pop(busyIndicator);
+//                  Utils.destroyBusyIndocator(busyIndicator)
                }
            }
 
-
            anchors.fill: parent
-//           initialItem: "qrc:/ChatView.qml"
-//           initialItem: "qrc:/LoginForm.qml"
-//             initialItem: "qrc:/ProfileForm.qml"
-//            initialItem: "qrc:/AddChannelForm.qml"
-//           initialItem: "qrc:/AddParticipantsForm.qml"
        }
 
 }

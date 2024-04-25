@@ -124,8 +124,8 @@ SplitView {
                  width: parent.width
                  text: "Change members"
                  onClicked:  {
-                   Coordinator.prepareUsersLists(chatList.currentIndex)
-                     stackView.push("qrc:/AddParticipantsForm.qml")
+                    Coordinator.prepareUsersLists(chatList.currentIndex)
+                    stackView.push("qrc:/AddParticipantsForm.qml")
                  }
              }
              Button {
@@ -142,8 +142,7 @@ SplitView {
                  text: "Leave channel"
 //                 enabled:
                  onClicked:  {
-//                   Coordinator.prepareUsersLists(chatList.currentIndex)
-//                     stackView.push("qrc:/AddParticipantsForm.qml")
+                    Coordinator.leaveFromChat()
                  }
              }
              Text {

@@ -15,4 +15,5 @@ Serialize::ChatMessage decodeMessageFromString(const std::string& message);
 Database::userChatMessage decodeChatMessage(Serialize::ChatMessage& msg);
 std::string createChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::set<std::string>& participants);
 std::string createModifyChatParticipantsMessage(const std::string& dbName, const std::string& chatTitle, PayloadType msgType);
+std::string createLeaveFromChatMessage(unsigned int messageId, const std::string& dbName, const std::string& chatCollectionName, const std::string&  chatTitle, const std::string&  nickName);
 #endif // MESSAGESERIALIZATION_H

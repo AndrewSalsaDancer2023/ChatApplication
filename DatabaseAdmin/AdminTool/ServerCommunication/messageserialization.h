@@ -12,6 +12,7 @@ struct chatMessagesTape;
 }
 
 using ADDUserToChatInfo = std::tuple<std::string, std::string, std::string, std::set<std::string> >;
+using LeaveUserFromChatInfo = std::tuple<std::string, std::string, std::string, std::string>;
 
 std::string createAuthorizationMessage(const std::string& login, const std::string& password, const std::string& dbName);
 Serialize::ChatMessage decodeMessageFromString(const std::string& message);
@@ -30,6 +31,8 @@ std::string createGetChatTapeMessage(const std::string& dbName, const std::strin
 std::string createModifyChatParticipantsMessage(const std::string& dbName, const std::string&  collName,
                                                 const std::string&  chatTitle, const std::set<std::string>& delUsrs, const std::set<std::string>& addUsrs);
 
+std::string createLeaveFromChatMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string&  chatTitle, const std::string&  nickName);
+
 Database::chatMessagesTape decodeMessageTapeFromChat(Serialize::ChatMessage& msg);
 Database::userChatMessage decodeChatMessage(Serialize::ChatMessage& msg);
 Database::chatInfo decodeParticipantsListMessage(Serialize::ChatMessage& msg);
@@ -37,3 +40,4 @@ std::vector<Database::chatInfo> decodeChatInfoMessages(Serialize::ChatMessage& m
 std::vector<Database::userInfo> decodeAllUsersMessage(Serialize::ChatMessage& msg);
 std::optional<ADDUserToChatInfo> decodeAddChatInfo(Serialize::ChatMessage& msg);
 std::optional<Database::userChatInfo> decodeModifyParticipantsChatMessage(Serialize::ChatMessage& msg);
+LeaveUserFromChatInfo decodeLeaveUserFromChatInfo(Serialize::ChatMessage& msg);

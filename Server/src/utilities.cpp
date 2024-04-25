@@ -223,6 +223,24 @@ ModifyUserInfo extractModifyUserInfo(Serialize::ChatMessage& msg)
 	return { dbName, chatCollectionName, chatTitle, usersToDelete, usersToAdd };
 }
 
+LeaveUserFromChatInfo extractLeaveUserFromChatInfo(Serialize::ChatMessage& msg)
+{
+    Serialize::LeaveUserFromChatInfo leaveUsrFromChatRequest;
+	msg.mutable_payload()->UnpackTo(&leaveUsrFromChatRequest);
+
+	auto dbName = std::move(leaveUsrFromChatRequest.dbname());
+	std::cout << "db:" << dbName << std::endl;
+	auto chatCollectionName = std::move(leaveUsrFromChatRequest.collectionname());
+	std::cout << "chatCollectionName:" << chatCollectionName << std::endl;
+	auto chatTitle = std::move(leaveUsrFromChatRequest.chattitle());
+
+	auto userToLeave = std::move(leaveUsrFromChatRequest.usertodelete());
+
+
+	return { dbName, chatCollectionName, chatTitle, userToLeave };
+}
+
+
 /*
 std::string toString(const md5::digest_type &digest)
 {

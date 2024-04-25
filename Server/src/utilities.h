@@ -5,6 +5,7 @@
 enum class PayloadType : unsigned int;
 using ADDUserToChatInfo = std::tuple<std::string, std::string, std::string, std::set<std::string> >;
 using ModifyUserInfo = std::tuple<std::string, std::string, std::string, std::set<std::string>, std::set<std::string>>;
+using LeaveUserFromChatInfo = std::tuple<std::string, std::string, std::string, std::string>;
 
 namespace Database {
  struct userInfo;
@@ -69,3 +70,4 @@ std::string serializeGetChatParticipantsMessage(PayloadType type, const Database
 
 ADDUserToChatInfo extractAddChatInfo(Serialize::ChatMessage& msg);
 ModifyUserInfo extractModifyUserInfo(Serialize::ChatMessage& msg);
+LeaveUserFromChatInfo extractLeaveUserFromChatInfo(Serialize::ChatMessage& msg);

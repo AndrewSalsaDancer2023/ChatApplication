@@ -103,6 +103,19 @@ Coordinator::Coordinator(QObject *parent) :
             {
                handleAddUsersFromChatError(msg);
             };
+
+     handlers[static_cast<::google::protobuf::uint32>(PayloadType::SERVER_LEAVE_USER_FROM_CHAT_SUCCESS)] =
+               [this](Serialize::ChatMessage& msg)
+            {
+                //handleDeleteUserFromChat(msg);
+                handleLeaveUserFromChat(msg);
+            };
+
+    handlers[static_cast<::google::protobuf::uint32>(PayloadType::SERVER_LEAVE_USER_FROM_CHAT_ERROR)] =
+               [this](Serialize::ChatMessage& msg)
+            {
+                handleLeaveUserFromChatError(msg);
+            };
 /*
      handlers[static_cast<::google::protobuf::uint32>(PayloadType::SERVER_MODIFY_CHAT_USERS_SUCCESS)] =
                [this](Serialize::ChatMessage& msg)
@@ -519,6 +532,29 @@ void Coordinator::handleDeleteUserFromChat(Serialize::ChatMessage& msg)
     if(chats.rowCount() > 0)
         onChatSelected(chats.getItem(0));
 }
+
+void Coordinator::handleLeaveUserFromChat(Serialize::ChatMessage& msg)
+{
+    const auto& [dbName, chatCollectionName, chatTitle, userToLeave] = decodeLeaveUserFromChatInfo(msg);
+    if((databaseName.toStdString() != dbName) || (chatCollectionName.toStdString() != chatCollectionName)
+    || (nickName.toStdString() != userToLeave))
+        return;
+    //delete chat with chatTitle
+}
+
+void Coordinator::handleLeaveUserFromChatError(Serialize::ChatMessage& msg)
+{
+    const auto& [dbName, chatCollectionName, chatTitle, userToLeave] = decodeLeaveUserFromChatInfo(msg);
+
+    if((databaseName.toStdString() != dbName) ||
+       (chatCollectionName.toStdString() != chatCollectionName) ||
+       (nickName.toStdString() != userToLeave))
+        return;
+
+    QString outmsg = "Error while leaving from chat:"+QString::fromStdString(chatTitle);
+    emit showError(outmsg);
+}
+
 /*
 void Coordinator::handleAddUserToChat(Serialize::ChatMessage& msg)
 {
@@ -540,6 +576,12 @@ void Coordinator::handleGetMessageTapeFromChatError(Serialize::ChatMessage& msg)
     std::string message = "Unable get users info:" + reason;
     QString outmsg = QString::fromStdString(message);
     emit showError(outmsg);
+}
+
+void Coordinator::leaveFromChat()
+{
+    const QString collName{"chatrooms"};
+    serverCommunicator->sendLeaveFromChatMessage(databaseName.toStdString(), collName.toStdString(), curChat.toStdString(), nickName.toStdString());
 }
 
 std::optional<Database::userInfo> Coordinator::findSelectedUser(const std::string& nick)

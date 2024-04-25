@@ -10,6 +10,7 @@ Component {
             Row {
                  spacing: 5
             Image {
+                id: profilePicture
                 width: 30
                 height: 30
                 source: "qrc:/profileImage.png"
@@ -32,6 +33,8 @@ Component {
                 Text {
                     id: conversationInfoNumber
                     text: message
+                    wrapMode: Text.Wrap
+                    width: wrapper.width - profilePicture.width - 5
                     color: "black"
                 }
             }

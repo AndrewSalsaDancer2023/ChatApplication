@@ -99,3 +99,25 @@ std::string createModifyChatParticipantsMessage(const std::string& dbName, const
 
    return {};
 }
+
+std::string createLeaveFromChatMessage(unsigned int messageId, const std::string& dbName, const std::string& chatCollectionName, const std::string&  chatTitle, const std::string&  nickName)
+{
+    Serialize::LeaveUserFromChatInfo leaveUsrMsg;
+
+    leaveUsrMsg.set_dbname(dbName);
+    leaveUsrMsg.set_collectionname(chatCollectionName);
+    leaveUsrMsg.set_chattitle(chatTitle);
+
+    leaveUsrMsg.set_usertodelete(std::move(nickName));
+
+    Serialize::ChatMessage msg;
+    msg.mutable_payload()->PackFrom(leaveUsrMsg);
+    msg.set_payload_type_id(static_cast<::google::protobuf::uint32>(messageId));
+
+    std::string out;
+    if(msg.SerializeToString(&out))
+        return out;
+
+    return {};
+}
+
