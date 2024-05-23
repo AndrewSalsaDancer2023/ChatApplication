@@ -298,7 +298,7 @@ void Coordinator::modifyChatParticipants(const QString& chat)
     if(delUsrs.empty() && addUsrs.empty())
         return;
 
-    serverCommunicator->sendModifyChatParticipantsMessage(databaseName.toStdString(), roomsCollName.toStdString(), chat.toStdString(), delUsrs, addUsrs);
+    serverCommunicator->sendModifyChatParticipantsMessage(databaseName.toStdString(), roomsCollName.toStdString(), chat.toStdString(), delUsrs, addUsrs, nickName.toStdString());
 }
 
 bool Coordinator::hasCorrectChatParticipants()
@@ -535,19 +535,34 @@ void Coordinator::handleDeleteUserFromChat(Serialize::ChatMessage& msg)
 
 void Coordinator::handleLeaveUserFromChat(Serialize::ChatMessage& msg)
 {
-    const auto& [dbName, chatCollectionName, chatTitle, userToLeave] = decodeLeaveUserFromChatInfo(msg);
-    if((databaseName.toStdString() != dbName) || (chatCollectionName.toStdString() != chatCollectionName)
+    const auto& [dbName, collName, chatTitle, userToLeave] = decodeLeaveUserFromChatInfo(msg);
+    if((databaseName.toStdString() != dbName) || (roomsCollName.toStdString() != collName)
     || (nickName.toStdString() != userToLeave))
         return;
-    //delete chat with chatTitle
+
+    if(nickName == QString::fromStdString(userToLeave))
+    {
+        chats.removeData(QString::fromStdString(chatTitle));
+        chatStorage.deleteChat(chatTitle);
+        //delete chat with chatTitle
+
+        convModel.removeAllData();
+        if(chats.rowCount() > 0)
+            onChatSelected(chats.getItem(0));
+    }
+    else
+    {
+        chatStorage.removeChatParticipant(chatTitle, userToLeave);
+        members.setParticipants(chatStorage.getParticipants(curChat.toStdString()));
+    }
 }
 
 void Coordinator::handleLeaveUserFromChatError(Serialize::ChatMessage& msg)
 {
-    const auto& [dbName, chatCollectionName, chatTitle, userToLeave] = decodeLeaveUserFromChatInfo(msg);
+    const auto& [dbName, collName, chatTitle, userToLeave] = decodeLeaveUserFromChatInfo(msg);
 
     if((databaseName.toStdString() != dbName) ||
-       (chatCollectionName.toStdString() != chatCollectionName) ||
+       (roomsCollName.toStdString() != collName) ||
        (nickName.toStdString() != userToLeave))
         return;
 

@@ -445,7 +445,8 @@ Database::chatInfo decodeParticipantsListMessage(Serialize::ChatMessage& msg)
 }
 
 std::string createModifyChatParticipantsMessage(const std::string& dbName, const std::string&  collName,
-                                                const std::string&  chatTitle, const std::set<std::string>& delUsrs, const std::set<std::string>& addUsrs)
+                                                const std::string&  chatTitle, const std::set<std::string>& delUsrs,
+                                                const std::set<std::string>& addUsrs, const std::string& modifierNickName)
 {
     Serialize::ModifyUsersChatInfo modifyInfoMsg;
 

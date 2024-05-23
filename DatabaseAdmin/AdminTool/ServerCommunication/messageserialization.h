@@ -29,7 +29,8 @@ std::string createChatMessage(const std::string& dbName, const std::string& coll
 std::string createInfoChatMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName, const std::string& message);
 std::string createGetChatTapeMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName);
 std::string createModifyChatParticipantsMessage(const std::string& dbName, const std::string&  collName,
-                                                const std::string&  chatTitle, const std::set<std::string>& delUsrs, const std::set<std::string>& addUsrs);
+                                                const std::string&  chatTitle, const std::set<std::string>& delUsrs,
+                                                const std::set<std::string>& addUsrs, const std::string& modifierNickName);
 
 std::string createLeaveFromChatMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string&  chatTitle, const std::string&  nickName);
 

@@ -140,6 +140,19 @@ void ChatStorage::addChatParticipant(const std::string& title, Database::Partici
     dataModel[title]->participants.push_back(std::move(participant));
 }
 
+void ChatStorage::removeChatParticipant(const std::string& title, const std::string& nickName)
+{
+    auto it = dataModel.find(title);
+    if(it == dataModel.end())
+        return;
+
+    auto rit = std::remove_if(it->second->participants.begin(), it->second->participants.end(),
+                              [&nickName](Database::Participant& prt){
+                                return prt.nickname == nickName;
+                              });
+    it->second->participants.erase(rit, it->second->participants.end());
+}
+
 std::optional<Database::userInfo> ChatStorage::getAuthUserInfo(const std::string& nickname)
 {
     auto it = std::find_if(users.begin(), users.end(),[&nickname](const auto& usrInfo){

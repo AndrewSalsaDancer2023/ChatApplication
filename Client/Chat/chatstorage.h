@@ -32,6 +32,7 @@ public:
     void fillChatsInfo(const std::vector<Database::chatInfo>& chats);
     void changeChatParticipants(const Database::chatInfo& chat);
     void addChatParticipant(const std::string& title, Database::Participant& participant);
+    void removeChatParticipant(const std::string& title, const std::string& nickName);
     void addUsers(std::vector<Database::userInfo> usrs) { users = std::move(usrs); }
     const usersList& getUsers() { return users; }
     bool chatExists(const std::string& title);

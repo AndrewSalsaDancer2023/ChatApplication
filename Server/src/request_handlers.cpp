@@ -356,7 +356,7 @@ void handleLeaveUserFromChat(websocket_session& session, Serialize::ChatMessage&
 		result = createLeaveFromChatMessage(static_cast<unsigned int>(PayloadType::SERVER_LEAVE_USER_FROM_CHAT_ERROR), dbName, chatCollectionName, chatTitle, userToDelete);
 		auto const ss = boost::make_shared<std::string const>(std::move(result));
 		session.send(ss);
-		std::cout << "handleModifyChatUsersList:SERVER_LEAVE_USER_FROM_CHAT_ERROR" << std::endl;
+		std::cout << "handleLeaveUserFromChat:SERVER_LEAVE_USER_FROM_CHAT_ERROR" << std::endl;
 		return;
 	}
 	session.deleteUsersFromChat(dbName, chatTitle, {userToDelete});

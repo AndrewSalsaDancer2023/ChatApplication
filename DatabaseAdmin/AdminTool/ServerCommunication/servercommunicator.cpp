@@ -130,9 +130,9 @@ void ServerCommunicator::sendGetMessageTapeFromChat(const std::string& dbName, c
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
 }
 
-void ServerCommunicator::sendModifyChatParticipantsMessage(const std::string& dbName, const std::string&  collName, const std::string&  chatTitle, std::set<std::string>& delUsrs, std::set<std::string>& addUsrs)
+void ServerCommunicator::sendModifyChatParticipantsMessage(const std::string& dbName, const std::string&  collName, const std::string&  chatTitle, std::set<std::string>& delUsrs, std::set<std::string>& addUsrs, const std::string& modifierNickName)
 {
-    std::string res = createModifyChatParticipantsMessage(dbName, collName, chatTitle, delUsrs, addUsrs);
+    std::string res = createModifyChatParticipantsMessage(dbName, collName, chatTitle, delUsrs, addUsrs, modifierNickName);
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
 }
 

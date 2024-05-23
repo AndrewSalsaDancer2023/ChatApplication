@@ -143,11 +143,11 @@ try{
     	handleAddUserToChat(*this, msg);
     }
     else*/
-    if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_DELETE_USER_FROM_CHAT) == msg.payload_type_id())
+    if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_LEAVE_USER_FROM_CHAT) == msg.payload_type_id())
     {
     	handleLeaveUserFromChat(*this, msg);
     }
-    if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_LEAVE_USER_FROM_CHAT/*SERVER_MODIFY_CHAT_USERS_LIST*/) == msg.payload_type_id())
+    if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_MODIFY_CHAT_USERS_LIST) == msg.payload_type_id())
     {
     	handleModifyChatUsersList(*this, msg);
     }
