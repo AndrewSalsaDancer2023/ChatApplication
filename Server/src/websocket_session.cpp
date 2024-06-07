@@ -71,9 +71,7 @@ on_accept(beast::error_code ec)
             shared_from_this()));
 }
 
-void
-websocket_session::
-on_read(beast::error_code ec, std::size_t)
+void websocket_session::on_read(beast::error_code ec, std::size_t)
 {
 try{
     std::cout << "websocket_session::on_read called" << std::endl;
@@ -81,14 +79,16 @@ try{
     if(ec)
         return fail(ec, "read");
 
-    // Send to all connections
     std::string resvdData = beast::buffers_to_string(buffer_.data());
-//    ws_.binary(true);    
+
     std::cout << "resvdData: " << resvdData << std::endl;
-    /*std::string dbName = "mydb";
-    std::string chatCollName = "news";
-    handleDeleteAllMessagesFromChat(dbName, chatCollName);*/
+
     auto msg = decodeMessageFromString(resvdData);
+    auto handlerCode = static_cast<unsigned int>(msg.payload_type_id());
+    auto itHandler = handlers.find(handlerCode);
+    if(itHandler != handlers.end())
+    	itHandler->second(*this, msg);
+/*
     if(static_cast<::google::protobuf::uint32>(PayloadType::CLIENT_AUTHENTICATION) == msg.payload_type_id())
     {
 //    	std::cout << "handleUserAuthorization called" << std::endl;
@@ -99,7 +99,7 @@ try{
     if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_GET_DB_NAMES) == msg.payload_type_id())
     {
 //        std::cout << "handleGetDatabaseNames called" << std::endl;
-        handleGetDatabaseNames(*this);
+        handleGetDatabaseNames(*this, msg);
     }
     else
     if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_GET_DB_COLLECTIONSNAMES) == msg.payload_type_id())
@@ -138,11 +138,6 @@ try{
     	handleCreateChat(*this, msg);
     }
     else
-/*    if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_ADD_USER_TO_CHAT) == msg.payload_type_id())
-    {
-    	handleAddUserToChat(*this, msg);
-    }
-    else*/
     if(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_LEAVE_USER_FROM_CHAT) == msg.payload_type_id())
     {
     	handleLeaveUserFromChat(*this, msg);
@@ -166,15 +161,7 @@ try{
     		{
     			handleSendChatTapeToClient(*this, msg);
     		}
-/*
- else 
- {
-
-   std::cout << "other sending string: " << resvdData << std::endl;
-    state_->send(resvdData);
-
-}
-*/
+    */
     // Clear the buffer
     buffer_.consume(buffer_.size());
 }
@@ -190,9 +177,26 @@ catch(std::exception& ex)
             shared_from_this()));
 }
 
-void
-websocket_session::
-send(boost::shared_ptr<std::string const> const& ss)
+void websocket_session::setupHandlers()
+{
+	handlers[static_cast<unsigned int>(PayloadType::CLIENT_AUTHENTICATION)] = handleUserAuthorization;
+    handlers[static_cast<unsigned int>(PayloadType::SERVER_GET_DB_NAMES)] = handleGetDatabaseNames;
+    handlers[static_cast<unsigned int>(PayloadType::SERVER_GET_DB_COLLECTIONSNAMES)] = handleGetCollectionNames;
+    handlers[static_cast<unsigned int>(PayloadType::SERVER_GET_ALL_USERS_IN_DATABASE)] = handleGetUsersNames;
+    handlers[static_cast<unsigned int>(PayloadType::SERVER_ADD_USER_TO_DATABASE)] = handleAddUserToDatabase;
+    handlers[static_cast<unsigned int>(PayloadType::SERVER_MARK_USER_AS_DELETED)] = handleMarkUserAsDeleted;
+    handlers[static_cast<unsigned int>(PayloadType::SERVER_DELETE_USER)] = handleDeleteUser;
+    handlers[static_cast<unsigned int>(PayloadType::SERVER_MODIFY_USER_INFO)] = handleModifyUser;
+    handlers[static_cast<unsigned int>(PayloadType::SERVER_CREATE_CHAT)] = handleCreateChat;
+    handlers[static_cast<unsigned int>(PayloadType::SERVER_LEAVE_USER_FROM_CHAT)] = handleLeaveUserFromChat;
+    handlers[static_cast<unsigned int>(PayloadType::SERVER_MODIFY_CHAT_USERS_LIST)] = handleModifyChatUsersList;
+    handlers[static_cast<unsigned int>(PayloadType::SERVER_GET_CHATS_USER_BELONGS_TO)] = handleGetChatsUserBelongsTo;
+    handlers[static_cast<unsigned int>(PayloadType::CLIENT_SEND_MESSAGE_TO_CHAT)] = handleAddMessageToChat;
+    handlers[static_cast<unsigned int>(PayloadType::CLIENT_REQUEST_MESSAGE_TAPE_FOR_CHAT)] = handleSendChatTapeToClient;
+
+}
+
+void websocket_session::send(boost::shared_ptr<std::string const> const& ss)
 {
     std::cout << "websocket_session::send called with data: " << *ss << std::endl;
 

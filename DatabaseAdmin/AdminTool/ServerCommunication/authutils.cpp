@@ -48,14 +48,14 @@ QString getHost(const std::string& path)
     return QString::fromStdString(parameters.host()) + ':' + QString::number(parameters.port());
 }
 
-std::pair<std::string, std::string> getLoginPassword(const std::string& path)
+std::pair<QString, QString> getLoginPassword(const QString& path)
 {
-    auto content = readJsonFromFile(QString::fromStdString(path));
+    auto content = readJsonFromFile(path);
     Serialize::ConnectionData data = getConnectionDataFromString(content.toStdString());
     if(!data.has_authentication())
         return {};
     const auto& auth = data.authentication();
-    return { auth.login(),  auth.password()};
+    return { QString::fromStdString(auth.login()), QString::fromStdString(auth.password())};
 }
 
 void saveClientAuthentication(const std::string& path, const std::string& login, const std::string& password, const std::string& database)
@@ -64,10 +64,10 @@ void saveClientAuthentication(const std::string& path, const std::string& login,
     saveJsonToFile(QString::fromStdString(path), QString::fromStdString(content));
 }
 
-std::tuple<std::string, std::string, std::string> getClientAuthentication(const std::string& path)
+std::tuple<QString, QString, QString> getClientAuthentication(const QString& path)
 {
-    auto content = readJsonFromFile(QString::fromStdString(path));
+    auto content = readJsonFromFile(path);
     Serialize::Login data = getAuthDataFromString(content.toStdString());
 
-    return {data.login(), data.password(), data.database()};
+    return {QString::fromStdString(data.login()), QString::fromStdString(data.password()), QString::fromStdString(data.database())};
 }

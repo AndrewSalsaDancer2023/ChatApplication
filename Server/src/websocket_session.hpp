@@ -17,9 +17,14 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace Database {
 	struct chatInfoArray;
+}
+
+namespace Serialize {
+	class ChatMessage;
 }
 // Forward declaration
 class shared_state;
@@ -28,6 +33,8 @@ class shared_state;
 */
 class websocket_session : public boost::enable_shared_from_this<websocket_session>
 {
+	typedef void (*handleFunctionType)(websocket_session& session, Serialize::ChatMessage& msg);
+	std::map<unsigned int, handleFunctionType> handlers;
     beast::flat_buffer buffer_;
     websocket::stream<beast::tcp_stream> ws_;
     boost::shared_ptr<shared_state> state_;
@@ -60,8 +67,8 @@ public:
     void send(boost::shared_ptr<std::string const> const& ss);
 
 private:
-    void
-    on_send(boost::shared_ptr<std::string const> const& ss);
+    void on_send(boost::shared_ptr<std::string const> const& ss);
+    void setupHandlers();
 };
 
 template<class Body, class Allocator>

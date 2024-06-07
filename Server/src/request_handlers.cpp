@@ -56,7 +56,7 @@ catch(std::exception& ex)
 }
 }
 
-void handleGetDatabaseNames(websocket_session& session)
+void handleGetDatabaseNames(websocket_session& session, Serialize::ChatMessage& msg)
 {
   auto &dbInstance =  DatabaseDriver::instance();
   auto names = dbInstance.getDatabasesNames();
@@ -337,7 +337,10 @@ void handleLeaveUserFromChat(websocket_session& session, Serialize::ChatMessage&
 				return;
 
 	const auto& [dbName, chatCollectionName,
-				 chatTitle, userToDelete] = extractLeaveUserFromChatInfo(msg);
+				 chatTitle, userToDelete, chatMessage] = extractLeaveUserFromChatInfo(msg);
+	std::cout << "handleLeaveUserFromChat" << std::endl;
+	std::cout << "chatTitle: " << chatTitle << "userToDelete: " << userToDelete
+			<< "chatMessage: " << chatMessage << std::endl;
 
 	auto &dbInstance =  DatabaseDriver::instance();
 
@@ -363,6 +366,8 @@ void handleLeaveUserFromChat(websocket_session& session, Serialize::ChatMessage&
 
 	result = createLeaveFromChatMessage(static_cast<unsigned int>(PayloadType::SERVER_LEAVE_USER_FROM_CHAT_SUCCESS), dbName, chatCollectionName, chatTitle, userToDelete);
 	session.sendChatMessageToAllParticipants(chatTitle, result);
+	result = serializeMessageToChat(dbName, chatTitle, userToDelete, chatMessage);
+	session.sendChatMessageToAllParticipants(chatTitle, result);
 }
 
 void handleModifyChatUsersList(websocket_session& session, Serialize::ChatMessage& msg)
@@ -370,8 +375,8 @@ void handleModifyChatUsersList(websocket_session& session, Serialize::ChatMessag
 	if(!msg.has_payload())
 			return;
 
-	const auto& [dbName, chatCollectionName, chatTitle,
-				 usersToDelete, usersToAdd] = extractModifyUserInfo(msg);
+	const auto& [dbName, chatCollectionName, chatTitle, usersToDelete,
+				 usersToAdd, modifierNick, delMessage, addMessage] = extractModifyUserInfo(msg);
 
 	auto &dbInstance =  DatabaseDriver::instance();
 
@@ -388,6 +393,8 @@ void handleModifyChatUsersList(websocket_session& session, Serialize::ChatMessag
 		}
 
 		session.deleteUsersFromChat(dbName, chatTitle, usersToDelete);
+		auto result = serializeMessageToChat(dbName, chatTitle, modifierNick, delMessage);
+		session.sendChatMessageToAllParticipants(chatTitle, result);
 	}
 
 	if(!usersToAdd.empty())
@@ -402,6 +409,8 @@ void handleModifyChatUsersList(websocket_session& session, Serialize::ChatMessag
 		}
 
 		session.addUsersToChat(dbName, chatTitle, usersToAdd);
+		auto result = serializeMessageToChat(dbName, chatTitle, modifierNick, addMessage);
+		session.sendChatMessageToAllParticipants(chatTitle, result);
 	}
 	/*Database::chatInfo*/ auto info = dbInstance.getChatParticipants(dbName, chatCollectionName, chatTitle);
 /*	std::set<std::string> remainUsrs;

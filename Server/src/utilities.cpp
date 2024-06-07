@@ -178,6 +178,40 @@ std::string serializeChatMessage(PayloadType type, Serialize::ChatMessage& msg)
 	return output;
 }
 
+Serialize::userMessage fillUserMessage(const std::string& nickName, const std::string& message)
+{
+    Serialize::userMessage userMessage;
+    userMessage.set_usernickname(nickName);
+    userMessage.set_usermessage(message);
+
+    ::google::protobuf::Timestamp timestamp;
+    timestamp.set_seconds(time(NULL));
+    timestamp.set_nanos(0);
+    *userMessage.mutable_timestamp() = timestamp;
+
+    return userMessage;
+}
+
+std::string serializeMessageToChat(const std::string& dbName, const std::string& chatCollectionName,
+								  const std::string& nickName, const std::string& message)
+{
+	Serialize::userChatMessage userChatMessage;
+	userChatMessage.set_dbname(dbName);
+	userChatMessage.set_chattitle(chatCollectionName);
+
+	*userChatMessage.mutable_message() = fillUserMessage(nickName, message);
+
+	Serialize::ChatMessage msg;
+	msg.mutable_payload()->PackFrom(userChatMessage);
+	msg.set_payload_type_id(static_cast<::google::protobuf::uint32>(PayloadType::SERVER_SEND_MESSAGE_FROM_CHAT));
+
+	std::string out;
+	if(msg.SerializeToString(&out))
+		return out;
+
+	return {};
+}
+
 ADDUserToChatInfo extractAddChatInfo(Serialize::ChatMessage& msg)
 {
     Serialize::CreateChatInfo createChatRequest;
@@ -220,7 +254,13 @@ ModifyUserInfo extractModifyUserInfo(Serialize::ChatMessage& msg)
 	for(int i = 0; i < modifyUsrToChatRequest.userstoadd_size(); ++i)
 		usersToAdd.insert(*modifyUsrToChatRequest.mutable_userstoadd(i));
 
-	return { dbName, chatCollectionName, chatTitle, usersToDelete, usersToAdd };
+	std::string modifierNickName = modifyUsrToChatRequest.modifiernick();
+
+	std::string delMessage = modifyUsrToChatRequest.delmessage();
+	std::string addMessage = modifyUsrToChatRequest.addmessage();
+
+	return { dbName, chatCollectionName, chatTitle, usersToDelete, usersToAdd,
+			  modifierNickName, delMessage, addMessage};
 }
 
 LeaveUserFromChatInfo extractLeaveUserFromChatInfo(Serialize::ChatMessage& msg)
@@ -235,11 +275,10 @@ LeaveUserFromChatInfo extractLeaveUserFromChatInfo(Serialize::ChatMessage& msg)
 	auto chatTitle = std::move(leaveUsrFromChatRequest.chattitle());
 
 	auto userToLeave = std::move(leaveUsrFromChatRequest.usertodelete());
+	auto leaveMessage = std::move(leaveUsrFromChatRequest.leavemessage());
 
-
-	return { dbName, chatCollectionName, chatTitle, userToLeave };
+	return { dbName, chatCollectionName, chatTitle, userToLeave, leaveMessage };
 }
-
 
 /*
 std::string toString(const md5::digest_type &digest)

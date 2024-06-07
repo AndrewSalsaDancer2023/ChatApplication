@@ -1,7 +1,8 @@
 #include "participantmodel.h"
 #include <QDebug>
 #include <QJsonObject>
-#include "../../Server/src/database/DatabaseTypes.h"
+//#include "../../Server/src/database/DatabaseTypes.h"
+#include "chatstorage.h"
 
 ParticipantModel::ParticipantModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -32,7 +33,7 @@ void ParticipantModel::addParticipant(const Participant& info)
 }
 
 
-void ParticipantModel::setParticipants(std::shared_ptr<std::vector<Database::Participant>> part)
+void ParticipantModel::setParticipants(std::shared_ptr<std::vector<Backend::Participant>> part)
 {
     removeAllData();
     participants = part;
@@ -71,11 +72,11 @@ QVariant ParticipantModel::data(const QModelIndex & index, int role) const
     switch(role)
     {
         case NameRole:
-            return QString::fromStdString(part.name);
+            return part.name;
         case SurnameRole:
-            return QString::fromStdString(part.surname);
+            return part.surname;
         case NickNameRole:
-            return QString::fromStdString(part.nickname);
+            return part.nickname;
         default:
             return QVariant();
     }
@@ -119,7 +120,7 @@ void ParticipantModel::removeParticipant(const QString& nickName)
     for(int i = 0; i < numRows(); ++i)
     {
         const auto& part = container[i];//m_chats.value(i);
-        if(part.nickname != nickName.toStdString())
+        if(part.nickname != nickName)
             continue;
 
         beginRemoveRows(QModelIndex(), i, i);
@@ -140,7 +141,7 @@ std::optional<Participant>  ParticipantModel::getParticipant(const QString& nick
     for(int i = 0; i < numRows(); ++i)
     {
         const auto& part = (*sp)[i];
-        if(part.nickname != nickName.toStdString())
+        if(part.nickname != nickName)
             continue;
 
         return (*sp)[i];

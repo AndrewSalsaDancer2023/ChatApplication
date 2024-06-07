@@ -4,6 +4,16 @@
 #include <set>
 #include <map>
 #include <chrono>
+#include <QString>
+#include <QSet>
+
+namespace Backend {
+struct chatInfo
+{
+    QString title;
+    QSet<QString> participants;
+};
+}
 
 namespace Database {
 
@@ -75,7 +85,7 @@ struct Participant
 
 struct singleUserMessage
 {
-	int64_t timestamp;
+    int64_t timestamp;
     std::string userNickName;
     std::string userMessage;
 

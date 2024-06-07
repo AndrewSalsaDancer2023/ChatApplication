@@ -3,37 +3,34 @@
 #include "../../Client/Chat/commonutils.h"
 #include <algorithm>
 
-ChatStorage::ChatStorage()
-{
+using namespace Backend;
 
-}
-
-std::set<std::string> ChatStorage::getChatTiltles() const
+QSet<QString> ChatStorage::getChatTiltles() const
 {
-    std::set<std::string> res;
+    QSet<QString> res;
     for (const auto& [key, value] : dataModel)
         res.insert(key);
 
     return res;
 }
 
-bool ChatStorage::chatExists(const std::string& title)
+bool ChatStorage::chatExists(const QString& title)
 {
     return dataModel.find(title) != dataModel.end();
 }
 
-void ChatStorage::addChatTilte(const std::string& title)
+void ChatStorage::addChatTilte(const QString& title)
 {
     if(dataModel.find(title) == dataModel.end())
-        dataModel[title] = std::make_shared<Database::chatData>();
+        dataModel[title] = std::make_shared<Backend::chatData>();
 }
 
-void ChatStorage::deleteChat(const std::string& title)
+void ChatStorage::deleteChat(const QString& title)
 {
     dataModel.erase(title);
 }
 
-std::shared_ptr<messageList> ChatStorage::getMessagesList(const std::string& title)
+std::shared_ptr<messageList> ChatStorage::getMessagesList(const QString& title)
 {
     auto itFind = dataModel.find(title);
     if(itFind != dataModel.end())
@@ -43,19 +40,19 @@ std::shared_ptr<messageList> ChatStorage::getMessagesList(const std::string& tit
     return {};
 }
 
-void ChatStorage::addMessagesList(const std::string& title, messageList& msgList)
+void ChatStorage::addMessagesList(const QString& title, messageList& msgList)
 {
     addChatTilte(title);
     dataModel[title]->messages = std::move(msgList);
 }
 
-void ChatStorage::addChatMessage(const std::string& title, Database::singleUserMessage& msg)
+void ChatStorage::addChatMessage(const QString& title, Database::singleUserMessage& msg)
 {
     addChatTilte(title);
-    dataModel[title]->messages.push_back(std::move(msg));
+    dataModel[title]->messages.emplace_back(std::move(Backend::singleUserMessage(msg)));
 }
 
-std::shared_ptr<participantList> ChatStorage::getParticipants(const std::string& title)
+std::shared_ptr<participantList> ChatStorage::getParticipants(const QString& title)
 {
     auto itFind = dataModel.find(title);
     if (itFind != dataModel.end())
@@ -65,7 +62,7 @@ std::shared_ptr<participantList> ChatStorage::getParticipants(const std::string&
     return {} ;
 }
 
-std::shared_ptr<participantList> ChatStorage::copyParticipants(const std::string& title)
+std::shared_ptr<participantList> ChatStorage::copyParticipants(const QString& title)
 {
     auto itFind = dataModel.find(title);
     if (itFind != dataModel.end())
@@ -82,12 +79,12 @@ std::shared_ptr<participantList> ChatStorage::copyUsers()
     std::shared_ptr<participantList> res = std::make_shared<participantList>();
 
     for(const auto& user: users)
-        (*res).push_back(std::move(Database::Participant{user.name, user.surname, user.nickname}));
+        (*res).push_back(std::move(Backend::Participant{user.name, user.surname, user.nickname}));
 
     return res;
 }
 
-std::shared_ptr<participantList> ChatStorage::copyUsersExceptChatMembers(const std::set<std::string>& members)
+std::shared_ptr<participantList> ChatStorage::copyUsersExceptChatMembers(const std::set<QString>& members)
 {
     std::shared_ptr<participantList> res = std::make_shared<participantList>();
 
@@ -95,32 +92,36 @@ std::shared_ptr<participantList> ChatStorage::copyUsersExceptChatMembers(const s
                   [&res, &members](const auto& user){
                     if(members.find(user.nickname) != members.end())
                         return;
-                    (*res).push_back(std::move(Database::Participant{user.name, user.surname, user.nickname}));
+                    (*res).emplace_back(std::move(Backend::Participant{user.name, user.surname, user.nickname}));
                   });
 
     return res;
 }
 
-void ChatStorage::addParticipantsList(const std::string& title, participantList& partList)
+void ChatStorage::addParticipantsList(const QString& title, participantList& partList)
 {
     addChatTilte(title);
     dataModel[title]->participants = std::move(partList);
 }
 
-void ChatStorage::fillChatsInfo(const std::vector<Database::chatInfo>& chats)
+void ChatStorage::fillChatsInfo(const std::vector<Backend::chatInfo>& chats)
 {
     for(const auto& chat : chats)
     {
-//        for(int i = 0; i < chat.participants.size(); ++i)
         for(const auto& participant : chat.participants)
         {
-            if(auto part = getUserInfo(users, participant))//chat.participants[i]))
-                addChatParticipant(chat.title, *part);
+            if(auto part = getUserInfo(users, participant))
+            {
+                Backend::Participant prt(*part);
+//                QString title = QString::fromStdString(chat.title);
+//                addChatParticipant(title, prt);
+                addChatParticipant(chat.title, prt);
+            }
         }
     }
 }
 
-void ChatStorage::changeChatParticipants(const Database::chatInfo& chat)
+void ChatStorage::changeChatParticipants(const Backend::chatInfo& chat)
 {
     std::shared_ptr<participantList> partList = getParticipants(chat.title);
     if(!partList)
@@ -130,30 +131,35 @@ void ChatStorage::changeChatParticipants(const Database::chatInfo& chat)
     for(const auto& participant : chat.participants)
     {
         if(auto part = getUserInfo(users, participant))
-            addChatParticipant(chat.title, *part);
+        {
+            Backend::Participant prt(*part);
+//            QString title = QString::fromStdString(chat.title);
+//            addChatParticipant(title, prt);
+            addChatParticipant(chat.title, prt);
+        }
     }
 }
 
-void ChatStorage::addChatParticipant(const std::string& title, Database::Participant& participant)
+void ChatStorage::addChatParticipant(const QString& title, Backend::Participant& participant)
 {
     addChatTilte(title);
     dataModel[title]->participants.push_back(std::move(participant));
 }
 
-void ChatStorage::removeChatParticipant(const std::string& title, const std::string& nickName)
+void ChatStorage::removeChatParticipant(const QString& title, const QString& nickName)
 {
     auto it = dataModel.find(title);
     if(it == dataModel.end())
         return;
 
     auto rit = std::remove_if(it->second->participants.begin(), it->second->participants.end(),
-                              [&nickName](Database::Participant& prt){
+                              [&nickName](Backend::Participant& prt){
                                 return prt.nickname == nickName;
                               });
     it->second->participants.erase(rit, it->second->participants.end());
 }
 
-std::optional<Database::userInfo> ChatStorage::getAuthUserInfo(const std::string& nickname)
+std::optional<Backend::userInfo> ChatStorage::getAuthUserInfo(const QString& nickname)
 {
     auto it = std::find_if(users.begin(), users.end(),[&nickname](const auto& usrInfo){
         return usrInfo.nickname == nickname;

@@ -45,40 +45,41 @@ void ServerCommunicator::onConnected()
  void ServerCommunicator::onBinaryMessageReceived(const QByteArray &message)
  {
       QString msg{message};
-      auto curMsg = decodeMessageFromString(message.toStdString());
-      auto id = curMsg.payload_type_id();
-//      coordinator.messageReceived(QString{message}.toStdString());
+//      auto curMsg = decodeMessageFromString(message.toStdString());
+      auto curMsg = decodeMessageFromString(message);
+//      auto id = curMsg.payload_type_id();
+
       coordinator.messageReceived(curMsg);
  }
 
- void ServerCommunicator::sendGetDBCollectionNamesRequest(const std::string& dbName)
+ void ServerCommunicator::sendGetDBCollectionNamesRequest(const QString& dbName)
  {
      std::string res = createNoPayloadMessage(PayloadType::SERVER_GET_DB_COLLECTIONSNAMES, dbName);
 
      m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
  }
 
- void ServerCommunicator::sendGetAllUsersMessage(const std::string& dbName, const std::string& collName)
+ void ServerCommunicator::sendGetAllUsersMessage(const QString& dbName, const QString& collName)
  {
      std::string res = createGetAllUsersMessage(PayloadType::SERVER_GET_ALL_USERS_IN_DATABASE, dbName, collName);
      m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
  }
 
- void ServerCommunicator::sendDeleteSelectedUserMessage(const std::string& dbName, const std::string& collName, const std::string& nickName)
+ void ServerCommunicator::sendDeleteSelectedUserMessage(const QString& dbName, const QString& collName, const QString& nickName)
  {
      std::string res = createDeleteUserMessage(dbName, collName, nickName);
      m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
  }
 
- void ServerCommunicator::sendAddUserMessage(const std::string& dbName, const std::string& collName, const Database::userInfo& info)
+ void ServerCommunicator::sendAddUserMessage(const QString& dbName, const QString& collName, const Backend::userInfo& info)
  {
     std::string res = createAddUserMessage(dbName, collName, info);
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
  }
 
- void ServerCommunicator::sendUpdateUserMessage(const std::string& dbName, const std::string& collName, const Database::userInfo& info)
+ void ServerCommunicator::sendUpdateUserMessage(const QString& dbName, const QString& collName, const Backend::userInfo& info)
  {
-     std::string res = createUpdateUserMessage(dbName, collName, info);
+     std::string res = createUpdateUserMessage(dbName, collName, info); //TODO refactor
      m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
  }
 
@@ -88,56 +89,68 @@ void ServerCommunicator::onConnected()
      m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
  }
 
- void ServerCommunicator::sendAuthorizeMessage(const std::string& login, const std::string& password, const std::string& dbName)
+ void ServerCommunicator::sendAuthorizeMessage(const QString& login, const QString& password, const QString& dbName)
  {
      std::string res = createAuthorizationMessage(login, password, dbName);
      m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
  }
 
- void ServerCommunicator::sendGetChatsContainUserMessage(const std::string& dbName, const std::string& collName, const std::string& nickName)
+ void ServerCommunicator::sendGetChatsContainUserMessage(const QString& dbName, const QString& collName, const QString& nickName)
  {
     std::string res = createGetChatsContainUserMessage(dbName, collName, nickName);
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
  }
 
-void ServerCommunicator::sendAddUserToChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::string& nickName)
+void ServerCommunicator::sendAddUserToChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const QString& nickName)
 {
     std::string res = createAddUserToChatMessage(dbName, collName, chatTitle, nickName);
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
 }
 
-void ServerCommunicator::sendDeleteUserFromChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::string& nickName)
+void ServerCommunicator::sendDeleteUserFromChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const QString& nickName)
 {
     std::string res = createDeleteUserFromChatMessage(dbName, collName, chatTitle, nickName);
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
 }
 
-void ServerCommunicator::sendCreateChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::set<std::string>& participants)
+void ServerCommunicator::sendCreateChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const QSet<QString>& participants)
 {
     std::string res = createChatMessage(dbName, collName, chatTitle, participants);
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
 }
 
-void ServerCommunicator::sendMessageToChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName, const std::string& message)
+void ServerCommunicator::sendMessageToChat(const QString& dbName, const QString& chatCollectionName, const QString& nickName, const QString& message)
 {
     std::string res = createInfoChatMessage(dbName, chatCollectionName, nickName, message);
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
 }
 
-void ServerCommunicator::sendGetMessageTapeFromChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName)
+void ServerCommunicator::sendGetMessageTapeFromChat(const QString& dbName, const QString& chatCollectionName, const QString& nickName)
 {
     std::string res = createGetChatTapeMessage(dbName, chatCollectionName, nickName);
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
 }
 
-void ServerCommunicator::sendModifyChatParticipantsMessage(const std::string& dbName, const std::string&  collName, const std::string&  chatTitle, std::set<std::string>& delUsrs, std::set<std::string>& addUsrs, const std::string& modifierNickName)
+void ServerCommunicator::sendModifyChatParticipantsMessage(const QString& dbName, const QString&  collName, const QString&  chatTitle, const QSet<QString>& delUsrs, const QSet<QString>& addUsrs,
+                                                           const QString& modifierNickName, const QString& delMessage, const QString& addMessage)
 {
-    std::string res = createModifyChatParticipantsMessage(dbName, collName, chatTitle, delUsrs, addUsrs, modifierNickName);
+    QSet<QString> deletedUsrs;
+    QSet<QString> addedUsrs;
+
+    for(const auto& usr: delUsrs)
+        deletedUsrs.insert(usr);
+
+    for(const auto& usr: addUsrs)
+        addedUsrs.insert(usr);
+
+    std::string res = createModifyChatParticipantsMessage(dbName, collName, chatTitle, deletedUsrs, addedUsrs, modifierNickName, delMessage, addMessage);
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
 }
 
-void ServerCommunicator::sendLeaveFromChatMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string& chatTitle, const std::string& nickName)
+void ServerCommunicator::sendLeaveFromChatMessage(const QString& dbName, const QString& chatCollectionName,
+                                                  const QString& chatTitle, const QString& nickName,
+                                                  const QString& leftChatPrefix)
 {
-    std::string res = createLeaveFromChatMessage(dbName, chatCollectionName, chatTitle, nickName);
+    std::string res = createLeaveFromChatMessage(dbName, chatCollectionName, chatTitle, nickName, leftChatPrefix);
     m_webSocket.sendBinaryMessage(QByteArray::fromStdString(res));
 }

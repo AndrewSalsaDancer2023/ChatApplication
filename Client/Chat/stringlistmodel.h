@@ -16,11 +16,11 @@ public:
     };
 
     StringListModel(QObject *parent = 0);
-    void addData(const std::set<std::string>& data);
+    void addData(const QSet<QString>& data);
     void addData(const QString& info);
     bool containsData(const QString& info);
-    Q_INVOKABLE void addSampleData();
-    Q_INVOKABLE bool changeSampleData(const QString& name);
+//    Q_INVOKABLE void addSampleData();
+//    Q_INVOKABLE bool changeSampleData(const QString& name);
     Q_INVOKABLE bool notEmpty() { return m_chats.count() > 0; }
     Q_INVOKABLE QString  getItem(int index);
     /////////////////////////////////////////////////////////////////////////////

@@ -7,15 +7,15 @@ StringListModel::StringListModel(QObject *parent)
     : QAbstractListModel(parent)
 {
 }
-
+/*
 void StringListModel::addSampleData()
 {
-/*     PersonInfo one{"Bill Gates", "555 7777"};
-     addData(one);*/
+     PersonInfo one{"Bill Gates", "555 7777"};
+     addData(one);
 }
-
-bool StringListModel::changeSampleData(const QString& name)
-{
+*/
+//bool StringListModel::changeSampleData(const QString& name)
+//{
  //    removeData(one.name);
 /*
     QModelIndex index = createIndexForData(name);
@@ -26,8 +26,8 @@ bool StringListModel::changeSampleData(const QString& name)
     auto value = QVariant(newName);
     return  setData(index, value);
 */
-    return true;
-}
+//    return true;
+//}
 
 Qt::ItemFlags StringListModel::flags(const QModelIndex &index) const
  {
@@ -54,12 +54,12 @@ bool StringListModel::setData(const QModelIndex &index, const QVariant &value, i
      return false;
  }
 
-void StringListModel::addData(const std::set<std::string>& data)
+void StringListModel::addData(const QSet<QString>& data)
 {
     for(auto& str : data)
     {
         beginInsertRows(QModelIndex(), rowCount(), rowCount());
-        m_chats << QString::fromStdString(std::move(str));
+        m_chats << str;//QString::fromStdString(std::move(str));
         endInsertRows();
     }
 }

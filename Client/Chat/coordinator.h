@@ -16,7 +16,7 @@
 #include <functional>
 #include <set>
 #include <memory>
-
+#include <QSet>
 enum class commState
 {
     Disconnected,
@@ -24,12 +24,11 @@ enum class commState
     Authenticated
 };
 
-namespace Database
+namespace Backend
 {
     struct userInfo;
 };
 
-//class ChatStorage;
 
 //https://blog.felgo.com/cross-platform-app-development/how-to-expose-a-qt-cpp-class-with-signals-and-slots-to-qml#how-to-register-your-cpp-class-as-a-qml-type
 class Coordinator : public QObject, public NetworkCoordinatorInterface
@@ -43,20 +42,19 @@ public:
     void onConnected() override;
 
     void messageReceived(Serialize::ChatMessage& message) override ;
-    std::optional<Database::userInfo> findSelectedUser(const std::string& nick) override;
-//    std::vector<std::string> getUsersNicknames();
-    void sendGetDBCollectionNamesRequest(const std::string& dbName) override;
-    void sendGetAllUsersMessage(const std::string& dbName, const std::string& collName) override;
-    void sendDeleteSelectedUserMessage(const std::string& dbName, const std::string& collName) override;
-    void sendAddUserMessage(const std::string& dbName, const std::string& collName, const Database::userInfo& info) override;
+    std::optional<Backend::userInfo> findSelectedUser(const QString& nick) override;
+    void sendGetDBCollectionNamesRequest(const QString& dbName) override;
+    void sendGetAllUsersMessage(const QString& dbName, const QString& collName) override;
+    void sendDeleteSelectedUserMessage(const QString& dbName, const QString& collName) override;
+    void sendAddUserMessage(const QString& dbName, const QString& collName, const Backend::userInfo& info) override;
     void sendGetDBNamesMessage() override;
-    void sendAuthorizeMessage(const std::string& dbName) override;
-    void sendAuthorizeMessage(const std::string& login, const std::string& password, const std::string& dbName) override;
+    void sendAuthorizeMessage(const QString& dbName) override;
+    void sendAuthorizeMessage(const QString& login, const QString& password, const QString& dbName) override;
 
     void sendGetChatsContainUserMessage(const QString& dbName, const QString& collName, const QString& nickName);
     void sendAddUserToChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const QString& nickName);
     void sendDeleteUserFromChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const QString& nickName);
-    void sendCreateChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const std::set<std::string>& participants);
+    void sendCreateChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const QSet<QString>& participants);
 
     Q_INVOKABLE void setAuthenticationData(QString login, QString password, QString dbName);
     Q_INVOKABLE void mainWindowLoaded();
@@ -90,7 +88,7 @@ public:
 
     Q_INVOKABLE QString getCurrentChatTitle() { return curChat; }
     Q_INVOKABLE void copyChatParticipants();
-    void fillConversationModel(const std::string& item);
+    void fillConversationModel(const QString& chat);
 private slots:
     void onChatSelected(QString chatTitle);
     void onConnectionTimeout();
@@ -137,14 +135,14 @@ private:
     void handleLeaveUserFromChat(Serialize::ChatMessage& msg);
     void handleLeaveUserFromChatError(Serialize::ChatMessage& msg);
 //    void handleAddUserToChat(Serialize::ChatMessage& msg);
-
+    void setupHandlers();
     commState state{commState::Disconnected};
-    std::map<::google::protobuf::uint32, std::function<void(Serialize::ChatMessage&)> > handlers;
+
     std::unique_ptr<ServerCommunicator> serverCommunicator;
 
     void tryToLogin();
-    std::set<std::string> getNickNames(ParticipantModel& model);
-    std::set<std::string> participants;
+    QSet<QString> getNickNames(ParticipantModel& model);
+    QSet<QString> participants;
 
     bool authorized{false};
     StringListModel chats;
@@ -153,10 +151,10 @@ private:
     ParticipantModel  allUsers;
     ParticipantModel  curParticipants;
 
-    std::optional<Database::userInfo> userSelected;
+    std::optional<Backend::userInfo> userSelected;
     std::map<std::string, std::set<std::string>> chatsInfo;
 
-    ChatStorage chatStorage;
+    Backend::ChatStorage chatStorage;
 
     QString nickName;
     QString databaseName;
@@ -164,7 +162,9 @@ private:
 
     QString curChat;
     bool loginScreenShown = false;
-    std::shared_ptr<participantList> allUsersModel;
-    std::shared_ptr<participantList> curPartcpantsModel;
+    std::shared_ptr<Backend::participantList> allUsersModel;
+    std::shared_ptr<Backend::participantList> curPartcpantsModel;
     std::unique_ptr<QTimer> conTimer;
+
+    std::map<unsigned int, void (Coordinator::*)(Serialize::ChatMessage& msg)> handlers;
 };

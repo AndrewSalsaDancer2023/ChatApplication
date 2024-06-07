@@ -156,8 +156,9 @@ void shared_state::deleteUsersFromChat(const std::string& dbName, const std::str
 	if(!usersToDelete.empty())
 		std::cout << "deleteUsersFromChat::user:" << *usersToDelete.cbegin() << std::endl;
 
-	activeUserSessions sessions = getActiveSessions(usersToDelete);
+//	activeUserSessions sessions = getActiveSessions(usersToDelete);
 	deleteUserNickFromChatInfo(chatTitle, usersToDelete);
+	activeUserSessions sessions = getActiveSessions(usersToDelete);
 	auto const sharedmessage = boost::make_shared<std::string const>(std::move(createModifyChatParticipantsMessage(dbName, chatTitle, PayloadType::SERVER_DELETE_USER_FROM_CHAT)));
 	sendMessageToActiveSessions(sessions, sharedmessage);
 }
@@ -168,7 +169,7 @@ void shared_state::addUsersToChat(const std::string& dbName, const std::string& 
 		if(!usersToAdd.empty())
 			std::cout << "addUsersToChat::user:" << *usersToAdd.cbegin() << std::endl;
 
-	activeUserSessions sessions = getActiveSessions(usersToAdd);
+//	activeUserSessions sessions = getActiveSessions(usersToAdd);
 	addUserNickToChatInfo(chatTitle, usersToAdd);
 //	auto const message = boost::make_shared<std::string const>(std::move(createModifyChatParticipantsMessage(dbName, chatTitle, PayloadType::SERVER_ADD_USER_TO_CHAT)));
 //	sendMessageToActiveSessions(sessions, message);
@@ -206,7 +207,7 @@ void shared_state::addUserNickToChatInfo(const std::string& chatTitle, const std
 		it->second.insert(userNickName);
 }
 
-void shared_state::deleteUserNickFromChatInfo(const std::string& chatTitle, const std::set<std::string>& usersToDelete)
+void shared_state::deleteUserNickFromChatInfo(const std::string& chatTitle, const std::set<std::string>& userNicknames)
 {
 	std::lock_guard<std::mutex> lock(chat_mutex);
 
@@ -214,7 +215,7 @@ void shared_state::deleteUserNickFromChatInfo(const std::string& chatTitle, cons
 	if(it == chatUsersMap.end())
 		return;
 
-	for(const auto& userNickName: usersToDelete)
+	for(const auto& userNickName: userNicknames)
 		it->second.erase(userNickName);
 }
 

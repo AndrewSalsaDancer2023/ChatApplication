@@ -9,10 +9,12 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <QSet>
+#include <QString>
 
 class NetworkCoordinatorInterface;
 
-namespace Database
+namespace Backend
 {
     struct userInfo;
 }
@@ -22,23 +24,25 @@ class ServerCommunicator : public QObject
     Q_OBJECT
 public:
     explicit ServerCommunicator(NetworkCoordinatorInterface& coord, QObject *parent = nullptr);
-    void sendGetDBCollectionNamesRequest(const std::string& dbName);
-    void sendGetAllUsersMessage(const std::string& dbName, const std::string& collName);
-    void sendDeleteSelectedUserMessage(const std::string& dbName, const std::string& collName, const std::string& nickName);
-    void sendAddUserMessage(const std::string& dbName, const std::string& collName, const Database::userInfo& info);
-    void sendUpdateUserMessage(const std::string& dbName, const std::string& collName, const Database::userInfo& info);
+    void sendGetDBCollectionNamesRequest(const QString& dbName);
+    void sendGetAllUsersMessage(const QString& dbName, const QString& collName);
+    void sendDeleteSelectedUserMessage(const QString& dbName, const QString& collName, const QString& nickName);
+    void sendAddUserMessage(const QString& dbName, const QString& collName, const Backend::userInfo& info);
+    void sendUpdateUserMessage(const QString& dbName, const QString& collName, const Backend::userInfo& info);
     void sendGetDBNamesMessage();
-    void sendAuthorizeMessage(const std::string& login, const std::string& password, const std::string& dbName);
+    void sendAuthorizeMessage(const QString& login, const QString& password, const QString& dbName);
 
-    void sendGetChatsContainUserMessage(const std::string& dbName, const std::string& collName, const std::string& nickName);
-    void sendAddUserToChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::string& nickName);
-    void sendDeleteUserFromChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::string& nickName);
-    void sendCreateChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::set<std::string>& participants);
-    void sendMessageToChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName, const std::string& message);
-    void sendGetMessageTapeFromChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName);
-    void sendModifyChatParticipantsMessage(const std::string& dbName, const std::string&  collName, const std::string&  chatTitle, std::set<std::string>& delUsrs, std::set<std::string>& addUsrs, const std::string& modifierNickName);
+    void sendGetChatsContainUserMessage(const QString& dbName, const QString& collName, const QString& nickName);
+    void sendAddUserToChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const QString& nickName);
+    void sendDeleteUserFromChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const QString& nickName);
+    void sendCreateChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const QSet<QString>& participants);
+    void sendMessageToChat(const QString& dbName, const QString& chatCollectionName, const QString& nickName, const QString& message);
+    void sendGetMessageTapeFromChat(const QString& dbName, const QString& chatCollectionName, const QString& nickName);
+    void sendModifyChatParticipantsMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const QSet<QString>& delUsrs, const QSet<QString>& addUsrs,
+                                           const QString& modifierNickName, const QString& delMessage, const QString& addMessage);
     void connectToHost();
-    void sendLeaveFromChatMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string& chatTitle, const std::string& nickName);
+    void sendLeaveFromChatMessage(const QString& dbName, const QString& chatCollectionName,
+                                  const QString& chatTitle, const QString& nickName, const QString& leftChatPrefix);
 signals:
 
 public slots:

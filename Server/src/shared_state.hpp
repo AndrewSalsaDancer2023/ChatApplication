@@ -56,7 +56,7 @@ private:
     void sendMessageToActiveSessions(const activeUserSessions& sessions, boost::shared_ptr<std::string const> const& message);
     std::set<std::string> getChatParticipants(const std::string& chatTitle);
     void addUserNickToChatInfo(const std::string& chatTitle, const std::set<std::string>& usersToAdd);
-    void deleteUserNickFromChatInfo(const std::string& chatTitle, const std::set<std::string>& usersToDelete);
+    void deleteUserNickFromChatInfo(const std::string& chatTitle, const std::set<std::string>& userNicknames);
 };
 
 #endif

@@ -4,10 +4,10 @@
 #include <vector>
 #include <functional>
 
-namespace Database {
+namespace Backend {
     struct Participant;
 }
-using Database::Participant;
+using Backend::Participant;
 
 class ParticipantModel : public QAbstractListModel
 {
@@ -21,7 +21,7 @@ public:
 
     ParticipantModel(QObject *parent = 0);
 
-    void setParticipants(std::shared_ptr<std::vector<Database::Participant>> part);
+    void setParticipants(std::shared_ptr<std::vector<Backend::Participant>> part);
     void addParticipant(const Participant& info);
     bool containsData(const Participant& info);
 //    Q_INVOKABLE bool notEmpty() { return m_chats.count() > 0; }
@@ -47,7 +47,7 @@ public slots:
 protected:
     QHash<int, QByteArray> roleNames() const;
 private:
-    std::weak_ptr<std::vector<Database::Participant>> participants;
+    std::weak_ptr<std::vector<Backend::Participant>> participants;
     int rowsNumber{};
 };
 

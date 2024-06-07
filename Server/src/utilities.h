@@ -4,8 +4,9 @@
 
 enum class PayloadType : unsigned int;
 using ADDUserToChatInfo = std::tuple<std::string, std::string, std::string, std::set<std::string> >;
-using ModifyUserInfo = std::tuple<std::string, std::string, std::string, std::set<std::string>, std::set<std::string>>;
-using LeaveUserFromChatInfo = std::tuple<std::string, std::string, std::string, std::string>;
+using ModifyUserInfo = std::tuple<std::string, std::string, std::string,
+								  std::set<std::string>, std::set<std::string>, std::string, std::string, std::string>;
+using LeaveUserFromChatInfo = std::tuple<std::string, std::string, std::string, std::string, std::string>;
 
 namespace Database {
  struct userInfo;
@@ -67,7 +68,9 @@ std::string serializeAllChatsUserBelongsToMessage(PayloadType type, const Databa
 std::string serializeChatMessagesTape(PayloadType type, const Database::chatMessagesTape& tape);
 std::string serializeChatMessage(PayloadType type, Serialize::ChatMessage& msg);
 std::string serializeGetChatParticipantsMessage(PayloadType type, const Database::chatInfo& info);
+std::string serializeMessageToChat(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName, const std::string& message);
 
 ADDUserToChatInfo extractAddChatInfo(Serialize::ChatMessage& msg);
 ModifyUserInfo extractModifyUserInfo(Serialize::ChatMessage& msg);
 LeaveUserFromChatInfo extractLeaveUserFromChatInfo(Serialize::ChatMessage& msg);
+

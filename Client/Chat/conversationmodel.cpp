@@ -8,15 +8,15 @@ ConversationModel::ConversationModel(QObject *parent)
     : QAbstractListModel(parent)
 {
 }
-
+/*
 void ConversationModel::addSampleData()
 {
-/*     PersonInfo one{"Bill Gates", "555 7777"};
-     addData(one);*/
+     PersonInfo one{"Bill Gates", "555 7777"};
+     addData(one);
 }
-
-bool ConversationModel::changeSampleData(const QString& name)
-{
+*/
+//bool ConversationModel::changeSampleData(const QString& name)
+//{
  //    removeData(one.name);
 /*
     QModelIndex index = createIndexForData(name);
@@ -27,8 +27,8 @@ bool ConversationModel::changeSampleData(const QString& name)
     auto value = QVariant(newName);
     return  setData(index, value);
 */
-    return true;
-}
+//    return true;
+//}
 
 Qt::ItemFlags ConversationModel::flags(const QModelIndex &index) const
  {
@@ -61,7 +61,7 @@ int ConversationModel::numRows() const
     return 0;
 }
 
-void ConversationModel::addData(const Database::singleUserMessage& info)
+void ConversationModel::addData(const Backend::singleUserMessage& info)
 {
     auto sp = messages.lock();
     if(!sp)
@@ -73,7 +73,7 @@ void ConversationModel::addData(const Database::singleUserMessage& info)
     endInsertRows();
 }
 
-void ConversationModel::addMessages(std::shared_ptr<std::vector<Database::singleUserMessage>> msgs)
+void ConversationModel::addMessages(std::shared_ptr<std::vector<Backend::singleUserMessage>> msgs)
 {
     removeAllData();
     messages = msgs;
@@ -110,13 +110,13 @@ QVariant ConversationModel::data(const QModelIndex & index, int role) const
     const Database::singleUserMessage &info = dataItems[index.row()];
 */
     if (role == UserNameRole)
-        return QString::fromStdString(msg.userNickName);
+        return msg.userNickName;
 
     if (role == DateRole)
         return convertDateTimeToStringFast(msg.timestamp);
 
     if(role == MessageRole)
-        return QString::fromStdString(msg.userMessage);
+        return msg.userMessage;
 
     return QVariant();
 }
@@ -141,16 +141,16 @@ void  ConversationModel::slotSelect(int index)
     emit itemSelected((*mp)[index]);
 }
 
-Database::singleUserMessage  ConversationModel::getItem(int index)
+Backend::singleUserMessage  ConversationModel::getItem(int index)
 {
-    if((index < 0) || (index >= numRows()/*dataItems.count()*/))
-        return {};
+    if((index < 0) || (index >= numRows()))
+        return Backend::singleUserMessage();
 
     auto mp = messages.lock();
     return (*mp)[index];
 }
 
-void ConversationModel::removeData(const Database::singleUserMessage& message)
+void ConversationModel::removeData(const Backend::singleUserMessage& message)
 {
     auto sp = messages.lock();
     if (!sp)
@@ -175,7 +175,7 @@ void ConversationModel::removeData(const Database::singleUserMessage& message)
     }
 }
 
-QModelIndex ConversationModel::createIndexForData(const Database::singleUserMessage& item)
+QModelIndex ConversationModel::createIndexForData(const Backend::singleUserMessage& item)
 {
     auto sp = messages.lock();
     if (!sp)

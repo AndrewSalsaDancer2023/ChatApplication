@@ -11,7 +11,7 @@
 void saveJsonToFile(const QString& path, const QString& fileContent);
 QString readJsonFromFile(const QString& path);
 QString getHost(const std::string& path);
-std::pair<std::string, std::string> getLoginPassword(const std::string& path);
+std::pair<QString, QString> getLoginPassword(const QString& path);
 void saveClientAuthentication(const std::string& path, const std::string& login, const std::string& password, const std::string& database);
-std::tuple<std::string, std::string, std::string> getClientAuthentication(const std::string& path);
+std::tuple<QString, QString, QString> getClientAuthentication(const QString& path);
 bool isFileExists(const QString& path);

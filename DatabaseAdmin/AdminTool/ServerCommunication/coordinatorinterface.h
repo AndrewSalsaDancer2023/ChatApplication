@@ -4,7 +4,7 @@
 #include <string>
 #include <optional>
 
-namespace Database
+namespace Backend
 {
     struct userInfo;
 }
@@ -20,13 +20,13 @@ public:
     virtual void messageReceived(Serialize::ChatMessage& message) = 0 ;
     virtual void onDisconnected() = 0;
     virtual void onConnected() = 0;
-    virtual std::optional<Database::userInfo> findSelectedUser(const std::string& nick) = 0;
-    virtual void sendGetDBCollectionNamesRequest(const std::string& dbName) = 0;
-    virtual void sendGetAllUsersMessage(const std::string& dbName, const std::string& collName) = 0;
-    virtual void sendDeleteSelectedUserMessage(const std::string& dbName, const std::string& collName) = 0;
-    virtual void sendAddUserMessage(const std::string& dbName, const std::string& collName, const Database::userInfo& info) = 0;
+    virtual std::optional<Backend::userInfo> findSelectedUser(const QString& nick) = 0;
+    virtual void sendGetDBCollectionNamesRequest(const QString& dbName) = 0;
+    virtual void sendGetAllUsersMessage(const QString& dbName, const QString& collName) = 0;
+    virtual void sendDeleteSelectedUserMessage(const QString& dbName, const QString& collName) = 0;
+    virtual void sendAddUserMessage(const QString& dbName, const QString& collName, const Backend::userInfo& info) = 0;
     virtual void sendGetDBNamesMessage() = 0;
-    virtual void sendAuthorizeMessage(const std::string& dbName) = 0;
-    virtual void sendAuthorizeMessage(const std::string& login, const std::string& password, const std::string& dbName) = 0;
+    virtual void sendAuthorizeMessage(const QString& dbName) = 0;
+    virtual void sendAuthorizeMessage(const QString& login, const QString& password, const QString& dbName) = 0;
 };
 

@@ -3,6 +3,8 @@
 #include <string>
 #include "../../Server/build/messages.pb.h"
 enum class PayloadType : unsigned int;
+#include <QString>
+#include <QSet>
 namespace Database {
 struct userInfo;
 struct userChatInfo;
@@ -11,34 +13,44 @@ struct userChatMessage;
 struct chatMessagesTape;
 }
 
-using ADDUserToChatInfo = std::tuple<std::string, std::string, std::string, std::set<std::string> >;
-using LeaveUserFromChatInfo = std::tuple<std::string, std::string, std::string, std::string>;
+namespace Backend {
+    struct chatInfo;
+    struct userInfo;
+    struct userChatMessage;
+    struct chatMessagesTape;
+    struct userChatInfo;
+}
 
-std::string createAuthorizationMessage(const std::string& login, const std::string& password, const std::string& dbName);
-Serialize::ChatMessage decodeMessageFromString(const std::string& message);
-std::string createNoPayloadMessage(PayloadType type, const std::string& description = "");
-std::string createGetAllUsersMessage(PayloadType type, const std::string& dbName, const std::string& collName);
-std::string createAddUserMessage(const std::string& dbName, const std::string& collName, const Database::userInfo& info);
-std::string createMarkUserAsDeletedMessage(const std::string& dbName, const std::string& collName, const std::string& nickName);
-std::string createDeleteUserMessage(const std::string& dbName, const std::string& collName, const std::string& nickName);
-std::string createUpdateUserMessage(const std::string& dbName, const std::string& collName, const Database::userInfo& info);
-std::string createGetChatsContainUserMessage(const std::string& dbName, const std::string& collName, const std::string& nickName);
-std::string createAddUserToChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::string& nickName);
-std::string createDeleteUserFromChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::string& nickName);
-std::string createChatMessage(const std::string& dbName, const std::string& collName, const std::string& chatTitle, const std::set<std::string>& participants);
-std::string createInfoChatMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName, const std::string& message);
-std::string createGetChatTapeMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string& nickName);
-std::string createModifyChatParticipantsMessage(const std::string& dbName, const std::string&  collName,
-                                                const std::string&  chatTitle, const std::set<std::string>& delUsrs,
-                                                const std::set<std::string>& addUsrs, const std::string& modifierNickName);
+using ADDUserToChatInfo = std::tuple<QString, QString, QString, QSet<QString> >;
+using LeaveUserFromChatInfo = std::tuple<QString, QString, QString, QString, QString>;
 
-std::string createLeaveFromChatMessage(const std::string& dbName, const std::string& chatCollectionName, const std::string&  chatTitle, const std::string&  nickName);
+std::string createAuthorizationMessage(const QString& login, const QString& password, const QString& dbName);
+Serialize::ChatMessage decodeMessageFromString(const QString& message);
+std::string createNoPayloadMessage(PayloadType type, const QString& description = "");
+std::string createGetAllUsersMessage(PayloadType type, const QString& dbName, const QString& collName);
+std::string createAddUserMessage(const QString& dbName, const QString& collName, const Backend::userInfo& info);
+std::string createMarkUserAsDeletedMessage(const QString& dbName, const QString& collName, const QString& nickName);
+std::string createDeleteUserMessage(const QString& dbName, const QString& collName, const QString& nickName);
+std::string createUpdateUserMessage(const QString& dbName, const QString& collName, const Backend::userInfo& info);
+std::string createGetChatsContainUserMessage(const QString& dbName, const QString& collName, const QString& nickName);
+std::string createAddUserToChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const QString& nickName);
+std::string createDeleteUserFromChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const QString& nickName);
+std::string createChatMessage(const QString& dbName, const QString& collName, const QString& chatTitle, const QSet<QString>& participants);
+std::string createInfoChatMessage(const QString& dbName, const QString& chatCollectionName, const QString& nickName, const QString& message);
+std::string createGetChatTapeMessage(const QString& dbName, const QString& chatCollectionName, const QString& nickName);
+std::string createModifyChatParticipantsMessage(const QString& dbName, const QString&  collName,
+                                                const QString&  chatTitle, const QSet<QString>& delUsrs,
+                                                const QSet<QString>& addUsrs, const QString& modifierNickName,
+                                                const QString& delMessage, const QString& addMessage);
 
-Database::chatMessagesTape decodeMessageTapeFromChat(Serialize::ChatMessage& msg);
-Database::userChatMessage decodeChatMessage(Serialize::ChatMessage& msg);
-Database::chatInfo decodeParticipantsListMessage(Serialize::ChatMessage& msg);
-std::vector<Database::chatInfo> decodeChatInfoMessages(Serialize::ChatMessage& msg);
-std::vector<Database::userInfo> decodeAllUsersMessage(Serialize::ChatMessage& msg);
+std::string createLeaveFromChatMessage(const QString& dbName, const QString& chatCollectionName,
+                                       const QString&  chatTitle, const QString&  nickName, const QString& leftMessagePrefix);
+
+Backend::chatMessagesTape decodeMessageTapeFromChat(Serialize::ChatMessage& msg);
+Backend::userChatMessage decodeChatMessage(Serialize::ChatMessage& msg);
+Backend::chatInfo decodeParticipantsListMessage(Serialize::ChatMessage& msg);
+std::vector<Backend::chatInfo> decodeChatInfoMessages(Serialize::ChatMessage& msg);
+std::vector<Backend::userInfo> decodeAllUsersMessage(Serialize::ChatMessage& msg);
 std::optional<ADDUserToChatInfo> decodeAddChatInfo(Serialize::ChatMessage& msg);
-std::optional<Database::userChatInfo> decodeModifyParticipantsChatMessage(Serialize::ChatMessage& msg);
+std::optional<Backend::userChatInfo> decodeModifyParticipantsChatMessage(Serialize::ChatMessage& msg);
 LeaveUserFromChatInfo decodeLeaveUserFromChatInfo(Serialize::ChatMessage& msg);

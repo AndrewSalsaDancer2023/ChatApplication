@@ -72,6 +72,9 @@ message ModifyUsersChatInfo
 	string chatTitle = 3;
 	repeated string usersToDelete = 4;
 	repeated string usersToAdd = 5;
+	string modifierNick = 6;
+	string delMessage = 7;
+	string addMessage = 8;
 }
 
 message LeaveUserFromChatInfo
@@ -80,6 +83,7 @@ message LeaveUserFromChatInfo
 	string collectionName = 2;
 	string chatTitle = 3;
 	string userToDelete = 4;
+	string leaveMessage = 5;
 }
 
 message chatInfo

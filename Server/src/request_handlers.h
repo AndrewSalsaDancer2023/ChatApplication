@@ -6,7 +6,7 @@ namespace Serialize {
  class ChatMessage;
 }
 void handleUserAuthorization(websocket_session& session, Serialize::ChatMessage& msg);
-void handleGetDatabaseNames(websocket_session& session);
+void handleGetDatabaseNames(websocket_session& session, Serialize::ChatMessage& msg);
 void handleGetCollectionNames(websocket_session& session, Serialize::ChatMessage& msg);
 void handleGetUsersNames(websocket_session& session, Serialize::ChatMessage& msg);
 void handleAddUserToDatabase(websocket_session& session, Serialize::ChatMessage& msg);
